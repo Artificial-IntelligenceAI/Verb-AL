@@ -1,0 +1,8 @@
+error: this name uses a class its descriptor does not permit
+ --> tests/errors/forbidden-class.val:2:49
+  |
+2 | privacy:local, memory:static, type:truth.1-bit, name.string.digit.end: "well-formed" = 'true'end
+  |                                                 ^^^^^^^^^^^^^^^^^^^^^
+  = the descriptor permits: string.digit
+  = but "well-formed" contains `-`, which is hyphen
+  = write: name.string.digit.hyphen.end

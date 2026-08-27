@@ -127,28 +127,43 @@ impl Checker {
         Ok(stmt)
     }
 
-    /// The heart of the language: a name must describe itself correctly.
+    /// The heart of the language: a name may only draw on the classes its
+    /// descriptor permits. The descriptor is an allowance, not an inventory —
+    /// it may permit more than the name happens to use.
     fn verify_name_descriptor(&self, d: &ast::Decl) -> Result<(), Diag> {
         if d.name.is_empty() {
             return Err(Diag::new("a name cannot be empty", d.name_span));
         }
-        let actual = classes_of(&d.name).map_err(|c| {
+        let present = classes_of(&d.name).map_err(|c| {
             Diag::new(
                 format!("the character `{}` in this name belongs to no class Verb-AL knows", c),
                 d.name_span,
             )
             .note("a name may only contain characters some class covers")
         })?;
-        if actual != d.name_classes {
-            return Err(Diag::new(
-                "the name descriptor does not match the name",
-                d.name_desc_span,
-            )
-            .note(format!("the descriptor says: {}", describe_classes(&d.name_classes)))
-            .note(format!("but \"{}\" contains: {}", d.name, describe_classes(&actual)))
-            .note(format!("write: name.{}.end", describe_classes(&actual))));
-        }
-        Ok(())
+
+        let missing: Vec<_> =
+            present.iter().copied().filter(|c| !d.name_classes.contains(c)).collect();
+        let Some(&first) = missing.first() else { return Ok(()) };
+
+        // Point at a character the reader can actually find in the name.
+        let offender = d
+            .name
+            .chars()
+            .find(|c| crate::types::classify(*c) == Some(first))
+            .expect("the class was found in this very name");
+        let permitted: Vec<_> =
+            d.name_classes.iter().copied().chain(missing.iter().copied()).collect();
+
+        Err(Diag::new("this name uses a class its descriptor does not permit", d.name_desc_span)
+            .note(format!("the descriptor permits: {}", describe_classes(&d.name_classes)))
+            .note(format!(
+                "but \"{}\" contains `{}`, which is {}",
+                d.name,
+                offender,
+                first.word()
+            ))
+            .note(format!("write: name.{}.end", describe_classes(&permitted))))
     }
 
     // ---- expressions ------------------------------------------------------

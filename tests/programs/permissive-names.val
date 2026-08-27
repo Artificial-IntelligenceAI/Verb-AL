@@ -1,0 +1,14 @@
+action:note, remark:'A name descriptor is an allowance, not an inventory: it may permit classes the name never uses, and the order it permits them in means nothing.'end
+
+action:note, remark:'Permits four classes, uses one.'end
+privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.digit.space.hyphen.end: "count" = '7'end
+
+action:note, remark:'The same permissions, written in a different order.'end
+privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.hyphen.space.digit.string.end: "other count" = '8'end
+
+action:note, remark:'Permits exactly what it uses.'end
+privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.digit.end: "third3" = '9'end
+
+action:say, source:"count"end
+action:say, source:"other count"end
+action:say, source:"third3"end

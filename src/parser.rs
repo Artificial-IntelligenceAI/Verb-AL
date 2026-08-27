@@ -194,14 +194,14 @@ impl<'a> Parser<'a> {
                 ));
             };
             if classes.contains(&class) {
-                return Err(Diag::new(format!("`{}` is listed twice", w), s)
-                    .note("a name descriptor lists each class once, in order of first appearance"));
+                return Err(Diag::new(format!("`{}` is permitted twice", w), s)
+                    .note("a descriptor is a set of permissions, so each class is listed once"));
             }
             classes.push(class);
         }
         if classes.is_empty() {
-            return Err(Diag::new("this name descriptor lists no character classes", span)
-                .note("every name contains at least one character, so write at least one class"));
+            return Err(Diag::new("this name descriptor permits no character classes", span)
+                .note("a name permitted nothing could not be written at all"));
         }
         Ok((classes, span))
     }

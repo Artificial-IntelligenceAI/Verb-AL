@@ -146,23 +146,26 @@ type:truth.1-bit                                           → i1
 
 ### 3.4 `name` — the character-class descriptor
 
-The key `name` carries a dotted list of the character classes occurring in the
-identifier: **deduplicated, in order of first appearance, exhaustive**, closed by
-`.end`.
-
-For `"Help me, please 🤣"` the characters run
+The key `name` carries a dotted list of the character classes the identifier is
+**permitted** to draw from, closed by `.end`. It is an allowance, not an
+inventory: the name must use only classes the descriptor lists, but it need not
+use every class it lists.
 
 ```
-H e l p   ␣   m e   ,   ␣   p l e a s e   ␣   🤣
-string    space string comma …            …    emoji
+name.string.space.comma.emoji.end: "Help me, please 🤣"
 ```
 
-whose first appearances in order are string, space, comma, emoji — hence
-`name.string.space.comma.emoji.end`.
+permits letters, spaces, commas and emoji, and this particular name happens to
+use all four. The same name would be equally legal under a descriptor that also
+permitted `digit`; a name of plain letters would be legal under this one.
 
-The descriptor is **checked**. If it does not match the name exactly, the
-program does not compile, and the error tells you the descriptor you should
-have written.
+The descriptor is **checked**. A name containing a character from a class the
+descriptor does not permit does not compile, and the error names the offending
+character and prints the descriptor you should have written.
+
+Order is not significant, because a set of permissions has no order. No class
+may be listed twice, and the list may not be empty — a name permitted nothing
+could not be written at all.
 
 | Class | Characters |
 |---|---|
@@ -172,8 +175,6 @@ have written.
 | `comma` `period` `hyphen` `underscore` | `,` `.` `-` `_` |
 | `apostrophe` `exclamation` `question` `colon` `slash` | `'` `!` `?` `:` `/` |
 | `emoji` | pictographic scalars, variation selectors and zero-width joiners |
-
-An empty name is a compile error, so every descriptor lists at least one class.
 
 ## 4. Actions
 

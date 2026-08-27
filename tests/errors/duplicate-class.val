@@ -1,0 +1,1 @@
+privacy:local, memory:static, type:truth.1-bit, name.string.space.string.end: "a name" = 'true'end

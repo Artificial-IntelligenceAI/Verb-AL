@@ -1,0 +1,6 @@
+error: `string` is permitted twice
+ --> tests/errors/duplicate-class.val:1:67
+  |
+1 | privacy:local, memory:static, type:truth.1-bit, name.string.space.string.end: "a name" = 'true'end
+  |                                                                   ^^^^^^
+  = a descriptor is a set of permissions, so each class is listed once

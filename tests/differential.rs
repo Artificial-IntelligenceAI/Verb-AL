@@ -80,7 +80,7 @@ fn backends_agree() {
         );
         checked += 1;
     }
-    assert!(checked >= 13, "expected the whole corpus, ran only {}", checked);
+    assert!(checked >= 15, "expected the whole corpus, ran only {}", checked);
 }
 
 /// A faulting program says so on standard error and exits 3, both ways.

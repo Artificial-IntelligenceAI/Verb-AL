@@ -13,10 +13,9 @@ privacy:local, memory:static, type:float.1-sign-bit.8-exponent-bits.23-explicit-
 
 The type states its bit layout instead of taking a name. The declaration states
 its visibility and its storage duration. The name states which character
-classes it contains — `string`, `space`, `comma`, `emoji`, in order of first
-appearance — which is how an identifier gets to hold a comma and an emoji
-without confusing the comma-separated attribute list around it. Every one of
-those claims is checked.
+classes it is permitted to draw on — `string`, `space`, `comma`, `emoji` — which
+is how an identifier gets to hold a comma and an emoji without confusing the
+comma-separated attribute list around it. Every one of those claims is checked.
 
 [`SPEC.md`](SPEC.md) is the language definition.
 
@@ -81,15 +80,18 @@ prints each at the shortest precision that round-trips it.
 The descriptors earn their keep by being checked:
 
 ```
-error: the name descriptor does not match the name
- --> examples/layouts.val:3:86
+error: this name uses a class its descriptor does not permit
+ --> tests/errors/forbidden-class.val:2:49
   |
-3 | privacy:local, ..., name.string.end: "signed thirty two" = '-2147483648'end
-  |                     ^^^^^^^^^^^^^^^
-  = the descriptor says: string
-  = but "signed thirty two" contains: string.space
-  = write: name.string.space.end
+2 | privacy:local, memory:static, type:truth.1-bit, name.string.digit.end: "well-formed" = 'true'end
+  |                                                 ^^^^^^^^^^^^^^^^^^^^^
+  = the descriptor permits: string.digit
+  = but "well-formed" contains `-`, which is hyphen
+  = write: name.string.digit.hyphen.end
 ```
+
+A descriptor is an allowance rather than an inventory: it may permit classes
+the name never uses, and the order it permits them in means nothing.
 
 Recorded transcripts of every diagnostic live in [`tests/errors`](tests/errors);
 re-record them with `VERBAL_BLESS=1 cargo test`.
