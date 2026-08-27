@@ -234,3 +234,60 @@ fn diagnostics_are_stable() {
         wrong.join("\n")
     );
 }
+
+/// Two unlexable characters in one file once crashed the permission scan,
+/// which runs before the compiler is even allowed to speak.
+#[test]
+fn unlexable_text_is_reported_not_fatal() {
+    let program = std::env::temp_dir().join("verbal-unlexable.val");
+    std::fs::write(&program, "allow[compiler:error.error-message]end\nprivacy:<a>, memory:<b>end\n")
+        .unwrap();
+    let outcome = invoke(Command::new(EXE).arg("check").arg(&program));
+    assert_eq!(outcome.code, 1, "it should fail");
+    assert!(
+        outcome.stderr.contains("rule broke & where:"),
+        "it should explain itself, not crash: {:?}",
+        outcome.stderr
+    );
+}
+
+/// The specification drifted once: a string replacement silently matched
+/// nothing, and §5 went on describing a syntax the compiler had stopped
+/// accepting. Every statement written in the documentation is now parsed.
+#[test]
+fn the_documentation_still_speaks_verbal() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let mut checked = 0;
+    for doc in ["SPEC.md", "README.md"] {
+        let text = std::fs::read_to_string(root.join(doc)).unwrap();
+        for (number, line) in text.lines().enumerate() {
+            let line = line.trim();
+            let is_statement = ["privacy:", "standard-output:", "action:", "allow["]
+                .iter()
+                .any(|start| line.starts_with(start));
+            // Prose quotes fragments, and the grammar sketches use <angled>
+            // metavariables; only whole, literal statements are parseable.
+            if !is_statement || !line.ends_with("end") || line.contains('<') {
+                continue;
+            }
+            let program = root.join("target").join("doc-line.val");
+            std::fs::write(&program, format!("allow[compiler:error.error-message]end\n{}\n", line))
+                .unwrap();
+            let outcome = invoke(Command::new(EXE).arg("check").arg(&program));
+            // A statement quoted on its own may name something the surrounding
+            // prose declared. That is not drift; anything else is.
+            let self_contained =
+                !outcome.stderr.contains("must be declared before it is used");
+            assert!(
+                outcome.code == 0 || !self_contained,
+                "{}:{} is no longer Verb-AL:\n{}\n{}",
+                doc,
+                number + 1,
+                line,
+                outcome.stderr
+            );
+            checked += 1;
+        }
+    }
+    assert!(checked >= 15, "expected the documentation's statements, found {}", checked);
+}

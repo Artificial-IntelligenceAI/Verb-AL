@@ -68,8 +68,12 @@ Both quote forms accept the escapes `\\` `\'` `\"` `\n` `\t` `\r` `\0`
 and `\u{...}` (hexadecimal Unicode scalar).
 
 A literal's **type comes from its context**: `'200'` is the float 200.0 under a
-float declaration and the integer 200 under an integer declaration. With no
-context to fix it — as in `action:say, source:'hello'end` — a literal is text.
+float declaration and the integer 200 under an integer declaration. Every
+position a literal may occupy fixes one — an initializer takes the declared
+type, an assignment takes its target's, a condition is a truth, an operand
+takes the type of what it is combined with — so a literal is never left to
+guess. Where nothing fixes a type, as in a comparison of two literals, that is
+itself the error, rather than a default being chosen quietly.
 
 ## 3. Declarations
 
@@ -200,9 +204,9 @@ boundary; the branch itself is closed by the named terminator `end-branch`.
 ```
 action:branch, condition:<expr>,
   then:
-    action:say, source:'big'end
+    standard-output:print.string.newline-too.end:["big"]end
   otherwise:
-    action:say, source:'small'end
+    standard-output:print.string.newline-too.end:["small"]end
   end-branch
 ```
 
@@ -226,8 +230,8 @@ standard-output:print.string.space.comma.exclamation.newline-too.end:["Hello, Wo
 ```
 
 A write names its destination, declares which character classes its literal
-content draws on, says whether it ends in a newline, and lists what to write
-between brackets.
+content draws on, says whether it names a variable and whether it ends in a
+newline, and lists what to write between brackets.
 
 The descriptor is the same construct as a name descriptor (§3.4) doing the same
 job: `print.<classes>.end` **permits** the classes the literal content may draw
@@ -235,6 +239,21 @@ on, and is checked. It may permit classes the content never uses; it may not
 omit one the content does use. The classes are those of §3.4 plus `plus`,
 `newline`, `tab` and `carriage-return`, which literal content can contain and a
 name in practice will not.
+
+Between the brackets, joined by `connect with`, two kinds of thing:
+
+| Written as | Is |
+|---|---|
+| `"…"` | literal character content, governed by the descriptor |
+| `(…)` | a variable, named by restating its declaration — §5.2 |
+
+Double quotes here mean what they mean in a declaration: a run of characters
+whose composition is being declared.
+
+Besides the classes, a descriptor may carry two words that are not classes:
+`variable` (§5.2) and `newline-too` (§5.1). Each may appear anywhere in the
+chain but never twice, and neither may appear in a *name* descriptor, since both
+say something about a write and a name is not written.
 
 ### 5.1 `newline-too`
 
@@ -254,29 +273,38 @@ parts. An empty write asking for a newline —
 
 `newline-too` is **not** a character class, and the two neighbouring words mean
 different things: the `newline` class permits a newline *within* what is
-written, while `newline-too` appends one *after* it. A name descriptor rejects
-`newline-too` outright, since a name is not written anywhere.
+written, while `newline-too` appends one *after* it.
 
-It may appear anywhere in the chain, like a class, but never twice. Neither
-`newline-too` nor `variable` may appear in a *name* descriptor: both say
-something about a write, and a name is not written.
+### 5.2 `variable` — naming one by restating it
 
-Between the brackets, comma-separated, two kinds of thing:
+A write may name a variable only if its descriptor says `variable`, and it names
+one by **restating that variable's declaration in full**:
 
-| Written as | Is |
-|---|---|
-| `"…"` | literal character content, governed by the descriptor |
-| `(…)` | a value — any expression (§7) — printed as its type prints (§8) |
+```
+privacy:local, memory:static, type:float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits, name.string.space.comma.emoji.end: "Apples" = '200'end
+standard-output:print.string.space.emoji.comma.colon.variable.newline-too.end:["Apples present: " connect with (privacy:local, memory:static, type:float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits, name.string.space.comma.emoji.end: "Apples" = '200'end)]end
+```
 
-A parenthesised value is not literal content, so the descriptor says nothing
-about it: `standard-output:print.newline-too.end:[("count")]end` writes a number
-under a descriptor that permits no classes at all, and is correct, because the
-statement contains no literal characters. What a computed value prints is fixed by its type,
-not by the program text.
+At the point of use, the program says again exactly what it is using. The
+restatement is **checked against the declaration it claims to be**: privacy,
+memory, type, name descriptor, name and initial value must all agree, or the
+program does not compile and the report says which attribute disagrees.
+Requiring the restatement would be pointless if restating it differently were
+not caught.
 
-Double quotes here mean what they mean in a declaration: a run of characters
-whose composition is being declared. Single quotes are values, and a value
-between the brackets must be parenthesised to say so.
+Name descriptors are compared as sets, since order in a descriptor carries no
+meaning. The variable found is the one in scope at the write, so two sibling
+blocks may each declare `"inner"` and each restate their own.
+
+What a variable prints is fixed by its type (§8), not by the program text, so
+the character classes say nothing about it. `print.variable.newline-too.end`
+permits no classes at all and is correct for a write with no literal content.
+
+A computed value is not a variable. To write one, declare a variable for it:
+
+```
+privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "is large" = ("size" greater-than '0')end
+```
 
 ## 6. Permissions
 

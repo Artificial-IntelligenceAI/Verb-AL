@@ -246,7 +246,9 @@ pub fn lex_lossy(text: &str) -> Vec<Token> {
             }
             Err(diag) => {
                 let Some(span) = diag.span else { return out };
-                let partial = lex(&text[from..span.start]).unwrap_or_default();
+                // The span is relative to the slice that was lexed, not to the
+                // whole text, so it must be rebased before it can index it.
+                let partial = lex(&text[from..from + span.start]).unwrap_or_default();
                 out.extend(shifted(partial, from));
                 // Step past the offending character and keep going.
                 let next = from + span.end.max(span.start + 1);

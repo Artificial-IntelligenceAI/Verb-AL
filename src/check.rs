@@ -365,6 +365,25 @@ impl Checker {
         }
     }
 
+    /// Report an undeclared name before reporting that its type is unknowable.
+    /// Inference cannot see through a name it has never heard of, and saying
+    /// "nothing says what type this is" when the answer is "that name does not
+    /// exist" buries the cause under the symptom.
+    fn names_are_known(&self, e: &Expr) -> Result<(), Diag> {
+        match e {
+            Expr::Ident { name, span } => match self.lookup(name) {
+                Some(_) => Ok(()),
+                None => Err(self.unknown_name(name, *span)),
+            },
+            Expr::Lit { .. } => Ok(()),
+            Expr::Unary { operand, .. } => self.names_are_known(operand),
+            Expr::Binary { lhs, rhs, .. } => {
+                self.names_are_known(lhs)?;
+                self.names_are_known(rhs)
+            }
+        }
+    }
+
     fn expr(&self, e: &Expr, expected: Option<Type>) -> Result<TExpr, Diag> {
         let got = match e {
             Expr::Ident { name, span } => {
@@ -387,6 +406,7 @@ impl Checker {
             }
 
             Expr::Unary { op: UnOp::Negated, operand, span } => {
+                self.names_are_known(operand)?;
                 let want = expected.or_else(|| self.infer(operand));
                 let Some(want) = want else {
                     return Err(Diag::new(
@@ -409,6 +429,8 @@ impl Checker {
             }
 
             Expr::Binary { op, lhs, rhs, op_span, span } => {
+                self.names_are_known(lhs)?;
+                self.names_are_known(rhs)?;
                 let operand_ty = match op {
                     BinOp::And | BinOp::Or => Type::Truth,
                     BinOp::JoinedWith => Type::Text,
