@@ -235,6 +235,40 @@ fn diagnostics_are_stable() {
     );
 }
 
+/// The statement-extraction test can check that the documentation's examples
+/// are still Verb-AL, but not that its prose describes the language — a claim
+/// about the grammar is not an extractable statement. So the claims §5 makes
+/// are pinned here instead, where the compiler answers rather than the page.
+#[test]
+fn a_write_names_a_variable_and_nothing_else() {
+    let declaration = "privacy:local, memory:static, type:text.utf-8.pointer-and-length, \
+                       name.string.end: \"greeting\" = 'hi'end";
+    let cases = [
+        // A restated declaration is the only thing the (…) position accepts.
+        (format!("{}\nstandard-output:print.variable.newline-too.end:[({})]end", declaration, declaration), true),
+        // Not an expression, however simple.
+        (format!("{}\nstandard-output:print.variable.newline-too.end:[(\"greeting\")]end", declaration), false),
+        // Not an allocating one either, so no temporary can escape into a write.
+        (format!("{}\nstandard-output:print.variable.newline-too.end:[(\"greeting\" joined-with \"greeting\")]end", declaration), false),
+        // Literal content is double-quoted, never single.
+        (format!("standard-output:print.string.newline-too.end:['hi']end"), false),
+    ];
+    for (source, should_compile) in cases {
+        let program = std::env::temp_dir().join("verbal-write-shape.val");
+        std::fs::write(&program, format!("allow[compiler:error.error-message]end\n{}\n", source))
+            .unwrap();
+        let outcome = invoke(Command::new(EXE).arg("check").arg(&program));
+        assert_eq!(
+            outcome.code == 0,
+            should_compile,
+            "expected compiles={} for:\n{}\n{}",
+            should_compile,
+            source,
+            outcome.stderr
+        );
+    }
+}
+
 /// Two unlexable characters in one file once crashed the permission scan,
 /// which runs before the compiler is even allowed to speak.
 #[test]
