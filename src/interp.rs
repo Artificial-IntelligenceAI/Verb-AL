@@ -35,9 +35,12 @@ impl<W: Write> Interpreter<W> {
                 let v = self.eval(init)?;
                 self.autos[*slot] = v;
             }
-            TStmt::Say { value, ty } => {
-                let v = self.eval(value)?;
-                let mut bytes = crate::fmt::say_bytes(&v, *ty);
+            TStmt::Print { parts } => {
+                let mut bytes = Vec::new();
+                for part in parts {
+                    let v = self.eval(part)?;
+                    bytes.extend_from_slice(&crate::fmt::say_bytes(&v, part.ty()));
+                }
                 bytes.push(b'\n');
                 self.out.write_all(&bytes).expect("writing to standard output");
             }

@@ -36,10 +36,27 @@ pub enum Stmt {
     /// compiler to do. Compile-time only; it runs no code.
     Allow { permission: String, permission_span: Span, span: Span },
     Note { remark: String, span: Span },
-    Say { source: Expr, span: Span },
+    /// `standard-output:print.<classes>.end:[…]end`
+    ///
+    /// The descriptor permits the character classes the *literal* content may
+    /// draw on, exactly as a name descriptor does for a name.
+    Print {
+        classes: Vec<CharClass>,
+        classes_span: Span,
+        items: Vec<PrintItem>,
+        span: Span,
+    },
     Assign { target: String, target_span: Span, value: Expr, span: Span },
     Branch { cond: Expr, then: Vec<Stmt>, otherwise: Vec<Stmt>, span: Span },
     Repeat { cond: Expr, body: Vec<Stmt>, span: Span },
+}
+
+/// One thing to be written. Literal character content is class-checked;
+/// a parenthesised expression is a value, printed as its type prints.
+#[derive(Clone, Debug)]
+pub enum PrintItem {
+    Literal { text: String, span: Span },
+    Value(Expr),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

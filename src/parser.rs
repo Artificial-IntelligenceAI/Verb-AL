@@ -2,7 +2,7 @@
 //! `key:value` attributes, terminated by a word.
 
 use crate::ast::*;
-use crate::diag::{Diag, Span};
+use crate::diag::{showable, Diag, Span};
 use crate::lexer::{Tok, Token};
 use crate::types::{CharClass, FloatKind, Type};
 
@@ -121,13 +121,16 @@ impl<'a> Parser<'a> {
             Some("privacy") => self.declaration(),
             Some("action") => self.action(),
             Some("allow") => self.permission(),
+            Some("standard-output") => self.print(),
             _ => Err(Diag::new(
                 format!(
-                    "every statement begins with `privacy`, `action` or `allow`; this one begins with {}",
+                    "every statement begins with `privacy`, `action`, `allow` or `standard-output`; \
+                     this one begins with {}",
                     self.peek().describe()
                 ),
                 self.peek_span(),
-                "begin with `privacy:` to declare, `action:` to act, or `allow[` to permit",
+                "begin with `privacy:` to declare, `action:` to act, `allow[` to permit, \
+                 or `standard-output:` to write",
             )),
         }
     }
@@ -252,7 +255,7 @@ impl<'a> Parser<'a> {
                     format!("a name descriptor permits character classes; `{}` is not one", w),
                     s,
                     "use one of string, digit, space, comma, period, hyphen, underscore, \
-                     apostrophe, exclamation, question, colon, slash, emoji",
+                     apostrophe, exclamation, question, colon, slash, plus, newline, tab, carriage-return, emoji",
                 ));
             };
             if classes.contains(&class) {
@@ -299,15 +302,6 @@ impl<'a> Parser<'a> {
                 };
                 let end = self.expect_word("end", "to close the note")?;
                 Ok(Stmt::Note { remark, span: start.to(end) })
-            }
-
-            "say" => {
-                self.expect(Tok::Comma, "after `say`")?;
-                self.expect_word("source", "as the second attribute of a say")?;
-                self.expect(Tok::Colon, "after `source`")?;
-                let source = self.expression()?;
-                let end = self.expect_word("end", "to close the say")?;
-                Ok(Stmt::Say { source, span: start.to(end) })
             }
 
             "assign" => {
@@ -358,7 +352,101 @@ impl<'a> Parser<'a> {
             other => Err(Diag::new(
                 format!("`{}` is not an action Verb-AL knows", other),
                 verb_span,
-                "use one of note, say, assign, branch or repetition",
+                "use one of note, assign, branch or repetition — writing is `standard-output:`",
+            )),
+        }
+    }
+
+    /// `standard-output:print.<classes>.end:["…", (expression)]end`
+    fn print(&mut self) -> Result<Stmt, Diag> {
+        let start = self.expect_word("standard-output", "to begin a write")?;
+        self.expect(Tok::Colon, "after `standard-output`")?;
+        let (classes, classes_span) = self.print_descriptor()?;
+        self.expect(Tok::Colon, "after the print descriptor")?;
+        self.expect(Tok::LBracket, "to open what is written")?;
+
+        let mut items = Vec::new();
+        loop {
+            items.push(self.print_item()?);
+            if *self.peek() == Tok::Comma {
+                self.bump();
+                continue;
+            }
+            break;
+        }
+        self.expect(Tok::RBracket, "to close what is written")?;
+        let end = self.expect_word("end", "to close the write")?;
+        Ok(Stmt::Print { classes, classes_span, items, span: start.to(end) })
+    }
+
+    /// `print.string.space.end` — like a name descriptor, but it may be empty,
+    /// since a write need not contain any literal characters at all.
+    fn print_descriptor(&mut self) -> Result<(Vec<CharClass>, Span), Diag> {
+        let start = self.expect_word("print", "to say what is being done to standard output")?;
+        let mut classes = Vec::new();
+        let mut span = start;
+        loop {
+            self.expect(Tok::Dot, "in the print descriptor")?;
+            let (w, s) = self.any_word("a character class, or `end` to close the descriptor")?;
+            span = span.to(s);
+            if w == "end" {
+                break;
+            }
+            let Some(class) = CharClass::from_word(&w) else {
+                return Err(Diag::new(
+                    format!("a print descriptor permits character classes; `{}` is not one", w),
+                    s,
+                    "use one of string, digit, space, comma, period, hyphen, underscore, \
+                     apostrophe, exclamation, question, colon, slash, plus, newline, tab, carriage-return, emoji",
+                ));
+            };
+            if classes.contains(&class) {
+                return Err(Diag::new(
+                    format!(
+                        "a descriptor is a set, so each class is permitted once; `{}` appears twice",
+                        w
+                    ),
+                    s,
+                    format!("delete this second `.{}`", w),
+                ));
+            }
+            classes.push(class);
+        }
+        Ok((classes, span))
+    }
+
+    fn print_item(&mut self) -> Result<PrintItem, Diag> {
+        match self.peek().clone() {
+            Tok::Ident(text) => {
+                let span = self.bump().span;
+                Ok(PrintItem::Literal { text, span })
+            }
+            Tok::LParen => {
+                self.bump();
+                let expr = self.expression()?;
+                self.expect(Tok::RParen, "to close the parenthesised value")?;
+                Ok(PrintItem::Value(expr))
+            }
+            Tok::Lit(text) => Err(Diag::new(
+                format!(
+                    "what is written is either \"character content\" or a (parenthesised value); \
+                     '{}' is neither",
+                    showable(&text)
+                ),
+                self.peek_span(),
+                format!(
+                    "write \"{}\" to print those characters, or parenthesise a value",
+                    showable(&text)
+                ),
+            )),
+            other => Err(Diag::new(
+                format!(
+                    "what is written is either \"character content\" or a (parenthesised value); \
+                     {} is neither",
+                    other.describe()
+                ),
+                self.peek_span(),
+                "write the characters in double quotes, or parenthesise a value such as (\"count\")",
             )),
         }
     }

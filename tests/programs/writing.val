@@ -1,0 +1,13 @@
+allow[compiler:error.error-message]end
+
+action:note, remark:'A write states which character classes its literal content draws on. Parenthesised values are not literal content, so the descriptor says nothing about them.'end
+
+privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "answer" = '42'end
+privacy:local, memory:static, type:text.utf-8.pointer-and-length, name.string.end: "who" = 'world'end
+
+standard-output:print.string.space.comma.exclamation.end:["Hello, World!"]end
+standard-output:print.string.space.end:["the answer is ", ("answer")]end
+standard-output:print.end:[("answer")]end
+standard-output:print.string.space.end:["hello ", ("who"), " and goodbye"]end
+standard-output:print.string.newline.tab.end:["over\ttwo\nlines"]end
+standard-output:print.emoji.space.end:["🤣 🎉"]end

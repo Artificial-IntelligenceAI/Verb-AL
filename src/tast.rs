@@ -37,7 +37,8 @@ impl TExpr {
 pub enum TStmt {
     /// Reached each time control passes the declaration.
     InitAuto { slot: usize, ty: Type, init: TExpr },
-    Say { value: TExpr, ty: Type },
+    /// Write each part in order, then a newline.
+    Print { parts: Vec<TExpr> },
     Assign { place: Place, ty: Type, value: TExpr },
     Branch { cond: TExpr, then: Vec<TStmt>, otherwise: Vec<TStmt> },
     Repeat { cond: TExpr, body: Vec<TStmt> },

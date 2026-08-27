@@ -7,11 +7,11 @@ privacy:local, memory:automatic, type:truth.1-bit, name.string.end: "go" = 'true
 action:branch, condition:"go",
   then:
     privacy:local, memory:automatic, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "inner" = '1'end
-    action:say, source:"inner"end
+    standard-output:print.end:[("inner")]end
   end-branch
 
 action:branch, condition:"go",
   then:
     privacy:public, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "inner" = '2'end
-    action:say, source:"inner"end
+    standard-output:print.end:[("inner")]end
   end-branch

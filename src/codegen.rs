@@ -222,9 +222,14 @@ impl<'ctx> Backend<'ctx> {
                 let v = self.eval(value);
                 self.builder.build_store(self.place_ptr(*place), v).unwrap();
             }
-            TStmt::Say { value, ty } => {
-                let v = self.eval(value);
-                self.say(v, *ty);
+            TStmt::Print { parts } => {
+                for part in parts {
+                    let ty = part.ty();
+                    let v = self.eval(part);
+                    self.say(v, ty);
+                }
+                let newline = self.cstring("\n");
+                self.call_printf(newline, &[]);
             }
             TStmt::Branch { cond, then, otherwise } => {
                 let c = self.eval(cond).into_int_value();
@@ -540,7 +545,7 @@ impl<'ctx> Backend<'ctx> {
                 } else {
                     self.builder.build_int_z_extend(v, i64t, "say.zext").unwrap()
                 };
-                let fmt = if signed { "%lld\n" } else { "%llu\n" };
+                let fmt = if signed { "%lld" } else { "%llu" };
                 let fmt = self.cstring(fmt);
                 self.call_printf(fmt, &[widened.into()]);
             }
@@ -552,7 +557,7 @@ impl<'ctx> Backend<'ctx> {
                 } else {
                     self.builder.build_float_ext(f, self.ctx.f64_type(), "say.fpext").unwrap()
                 };
-                let fmt = self.cstring(&format!("%.{}g\n", kind.print_precision()));
+                let fmt = self.cstring(&format!("%.{}g", kind.print_precision()));
                 self.call_printf(fmt, &[widened.into()]);
             }
 
@@ -564,7 +569,7 @@ impl<'ctx> Backend<'ctx> {
                     .build_select(v.into_int_value(), yes, no, "say.truth")
                     .unwrap()
                     .into_pointer_value();
-                let fmt = self.cstring("%s\n");
+                let fmt = self.cstring("%s");
                 self.call_printf(fmt, &[chosen.into()]);
             }
 
@@ -577,7 +582,7 @@ impl<'ctx> Backend<'ctx> {
                 let (ptr, len) = self.text_parts(v);
                 let len32 =
                     self.builder.build_int_truncate(len, self.ctx.i32_type(), "say.len").unwrap();
-                let fmt = self.cstring("%.*s\n");
+                let fmt = self.cstring("%.*s");
                 self.call_printf(fmt, &[len32.into(), ptr.into()]);
             }
         }
@@ -700,7 +705,7 @@ impl<'ctx> Backend<'ctx> {
         let terminator =
             unsafe { self.builder.build_gep(i8t, buf, &[count], "terminator").unwrap() };
         self.builder.build_store(terminator, i8t.const_zero()).unwrap();
-        let fmt = self.cstring("%s\n");
+        let fmt = self.cstring("%s");
         self.builder.build_call(self.printf, &[fmt.into(), buf.into()], "").unwrap();
         self.builder.build_return(None).unwrap();
 

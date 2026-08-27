@@ -1,0 +1,5 @@
+allow[compiler:error.error-message]end
+
+action:note, remark:'The first program, stating what it permits the compiler to say and which character classes it is about to write.'end
+
+standard-output:print.string.space.comma.exclamation.end:["Hello, World!"]end

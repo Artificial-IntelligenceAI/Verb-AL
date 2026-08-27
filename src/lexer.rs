@@ -26,8 +26,8 @@ impl Tok {
     pub fn describe(&self) -> String {
         match self {
             Tok::Word(w) => format!("`{}`", w),
-            Tok::Ident(n) => format!("the name \"{}\"", n),
-            Tok::Lit(v) => format!("the literal '{}'", v),
+            Tok::Ident(n) => format!("the name \"{}\"", crate::diag::showable(n)),
+            Tok::Lit(v) => format!("the literal '{}'", crate::diag::showable(v)),
             Tok::Colon => "`:`".into(),
             Tok::Comma => "`,`".into(),
             Tok::Dot => "`.`".into(),

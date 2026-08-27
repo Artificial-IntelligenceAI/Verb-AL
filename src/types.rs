@@ -29,7 +29,7 @@ impl FloatKind {
         }
     }
 
-    /// The shortest `%g` precision that round-trips this layout. See SPEC §7.
+    /// The shortest `%g` precision that round-trips this layout. See SPEC §8.
     pub fn print_precision(self) -> u32 {
         match self {
             FloatKind::Half => 5,
@@ -166,6 +166,10 @@ pub enum CharClass {
     Question,
     Colon,
     Slash,
+    Plus,
+    Newline,
+    Tab,
+    CarriageReturn,
     Emoji,
 }
 
@@ -184,6 +188,10 @@ impl CharClass {
             CharClass::Question => "question",
             CharClass::Colon => "colon",
             CharClass::Slash => "slash",
+            CharClass::Plus => "plus",
+            CharClass::Newline => "newline",
+            CharClass::Tab => "tab",
+            CharClass::CarriageReturn => "carriage-return",
             CharClass::Emoji => "emoji",
         }
     }
@@ -203,6 +211,10 @@ impl CharClass {
             "question" => Question,
             "colon" => Colon,
             "slash" => Slash,
+            "plus" => Plus,
+            "newline" => Newline,
+            "tab" => Tab,
+            "carriage-return" => CarriageReturn,
             "emoji" => Emoji,
             _ => return None,
         })
@@ -233,6 +245,10 @@ pub fn classify(c: char) -> Option<CharClass> {
         '?' => Question,
         ':' => Colon,
         '/' => Slash,
+        '+' => Plus,
+        '\n' => Newline,
+        '\t' => Tab,
+        '\r' => CarriageReturn,
         _ if is_emoji(c) => Emoji,
         _ if c.is_alphabetic() => String,
         _ if c.is_numeric() => Digit,

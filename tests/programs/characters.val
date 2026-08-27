@@ -7,8 +7,8 @@ privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string
 privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string.end: "three" = '\u{4E2D}'end
 privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string.end: "four" = '🤣'end
 
-action:say, source:"one"end
-action:say, source:"two"end
-action:say, source:"three"end
-action:say, source:"four"end
-action:say, source:"one" less-than "four"end
+standard-output:print.end:[("one")]end
+standard-output:print.end:[("two")]end
+standard-output:print.end:[("three")]end
+standard-output:print.end:[("four")]end
+standard-output:print.end:[("one" less-than "four")]end

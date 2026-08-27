@@ -9,9 +9,9 @@ privacy:local, memory:automatic, type:float.1-sign-bit.8-exponent-bits.23-explic
 action:assign, target:"small", value:"small" divided-by '3'end
 action:assign, target:"third", value:"third" divided-by '3'end
 
-action:say, source:"small"end
-action:say, source:"third"end
-action:say, source:"nothing"end
-action:say, source:"nothing" equal-to "nothing"end
-action:say, source:"nothing" not-equal-to "nothing"end
-action:say, source:negated "third"end
+standard-output:print.end:[("small")]end
+standard-output:print.end:[("third")]end
+standard-output:print.end:[("nothing")]end
+standard-output:print.end:[("nothing" equal-to "nothing")]end
+standard-output:print.end:[("nothing" not-equal-to "nothing")]end
+standard-output:print.end:[(negated "third")]end

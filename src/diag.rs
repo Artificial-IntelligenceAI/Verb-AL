@@ -42,6 +42,21 @@ impl Diag {
     }
 }
 
+/// Text from the program, made safe to quote inside a report: a report is six
+/// lines, and a literal newline in a name or a written run would make it more.
+pub fn showable(text: &str) -> String {
+    text.chars()
+        .map(|c| match c {
+            '\n' => "\\n".to_string(),
+            '\t' => "\\t".to_string(),
+            '\r' => "\\r".to_string(),
+            '\0' => "\\0".to_string(),
+            c if (c as u32) < 0x20 => format!("\\u{{{:X}}}", c as u32),
+            c => c.to_string(),
+        })
+        .collect()
+}
+
 /// A named blob of source text, able to turn byte offsets back into
 /// line/column positions and render a diagnostic against them.
 pub struct Source {

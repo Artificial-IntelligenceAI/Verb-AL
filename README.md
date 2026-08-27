@@ -17,6 +17,13 @@ classes it is permitted to draw on — `string`, `space`, `comma`, `emoji` — w
 is how an identifier gets to hold a comma and an emoji without confusing the
 comma-separated attribute list around it. Every one of those claims is checked.
 
+Writing works the same way. A write declares which character classes its
+literal content draws on, and that claim is checked too:
+
+```
+standard-output:print.string.space.comma.exclamation.end:["Hello, World!"]end
+```
+
 [`SPEC.md`](SPEC.md) is the language definition.
 
 ## Two backends, one language
@@ -57,11 +64,13 @@ verbal check examples/fizzbuzz.val      # report errors and stop
 
 | File | Shows |
 |---|---|
+| [`hello-world.val`](examples/hello-world.val) | the first program |
 | [`hello.val`](examples/hello.val) | the canonical declaration |
 | [`counting.val`](examples/counting.val) | repetition and assignment |
 | [`fizzbuzz.val`](examples/fizzbuzz.val) | nested branches, `remainder-of`, block scoping |
 | [`memory.val`](examples/memory.val) | `static` and `automatic` telling themselves apart |
 | [`layouts.val`](examples/layouts.val) | every type, printing at its declared precision |
+| [`writing.val`](tests/programs/writing.val) | literal content and computed values in one write |
 
 `layouts.val` prints one tenth four times:
 
@@ -122,6 +131,14 @@ compiler. Where a fix can be specific, it is:
 ```
 rule broke & where: every name must be declared before it is used; "countor" never was
 suggested fix: write "counter", which is declared and in scope
+```
+
+The same rule that governs names governs written content, so a write whose
+descriptor forgets a class is told which character gave it away:
+
+```
+rule broke & where: what is written uses only the classes its descriptor permits; this descriptor permits string.space.emoji.comma, but "Hello, World!" contains `!`, which is exclamation
+suggested fix: write print.string.space.emoji.comma.exclamation.end
 ```
 
 Recorded transcripts of every diagnostic live in [`tests/errors`](tests/errors);

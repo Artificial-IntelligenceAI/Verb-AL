@@ -5,7 +5,7 @@
 use std::collections::HashMap;
 
 use crate::ast::{self, BinOp, Expr, MemoryClass, Stmt, UnOp};
-use crate::diag::{Diag, Span};
+use crate::diag::{showable, Diag, Span};
 use crate::tast::*;
 use crate::types::{classes_of, describe_classes, Type};
 use crate::value::{self, Value};
@@ -35,7 +35,7 @@ impl Checker {
 
     fn unknown_name(&self, name: &str, span: Span) -> Diag {
         let mut diag = Diag::new(
-            format!("every name must be declared before it is used; \"{}\" never was", name),
+            format!("every name must be declared before it is used; \"{}\" never was", showable(name)),
             span,
             "declare it first, stating its privacy, memory, type and name descriptor",
         );
@@ -49,7 +49,7 @@ impl Checker {
             .min_by_key(|(d, _)| *d);
         if let Some((_, declared)) = nearest {
             // A near miss is worth more than the general advice, so it leads.
-            diag.fix = format!("write \"{}\", which is declared and in scope", declared);
+            diag.fix = format!("write \"{}\", which is declared and in scope", showable(declared));
         }
         diag
     }
@@ -94,10 +94,23 @@ impl Checker {
 
             Stmt::Decl(d) => self.declaration(d),
 
-            Stmt::Say { source, .. } => {
-                let value = self.expr(source, None)?;
-                let ty = value.ty();
-                Ok(Some(TStmt::Say { value, ty }))
+            Stmt::Print { classes, classes_span, items, .. } => {
+                let mut parts = Vec::new();
+                for item in items {
+                    match item {
+                        // Literal character content is what the descriptor
+                        // governs, exactly as a name descriptor governs a name.
+                        ast::PrintItem::Literal { text, span } => {
+                            self.verify_print_descriptor(text, *span, classes, *classes_span)?;
+                            parts.push(TExpr::Const {
+                                value: Value::Text(text.clone()),
+                                ty: Type::Text,
+                            });
+                        }
+                        ast::PrintItem::Value(expr) => parts.push(self.expr(expr, None)?),
+                    }
+                }
+                Ok(Some(TStmt::Print { parts }))
             }
 
             Stmt::Assign { target, target_span, value, .. } => {
@@ -128,7 +141,7 @@ impl Checker {
 
         if self.lookup(&d.name).is_some() {
             return Err(Diag::new(
-                format!("one name stands for one thing; \"{}\" is already declared", d.name),
+                format!("one name stands for one thing; \"{}\" is already declared", showable(&d.name)),
                 d.name_span,
                 "choose a different name, or delete the earlier declaration",
             ));
@@ -179,10 +192,10 @@ impl Checker {
             Diag::new(
                 format!(
                     "every character in a name belongs to some class; `{}` belongs to none",
-                    c
+                    showable(&c.to_string())
                 ),
                 d.name_span,
-                format!("remove `{}` from the name", c),
+                format!("remove `{}` from the name", showable(&c.to_string())),
             )
         })?;
 
@@ -210,6 +223,47 @@ impl Checker {
             ),
             d.name_desc_span,
             format!("write name.{}.end", describe_classes(&permitted)),
+        ))
+    }
+
+    /// Literal content written to standard output obeys the same rule a name
+    /// does: it may draw only on the classes its descriptor permits.
+    fn verify_print_descriptor(
+        &self,
+        text: &str,
+        text_span: Span,
+        permitted: &[crate::types::CharClass],
+        descriptor_span: Span,
+    ) -> Result<(), Diag> {
+        let present = classes_of(text).map_err(|c| {
+            Diag::new(
+                format!(
+                    "every character written belongs to some class; `{}` belongs to none",
+                    showable(&c.to_string())
+                ),
+                text_span,
+                format!("remove `{}` from what is written", showable(&c.to_string())),
+            )
+        })?;
+        let missing: Vec<_> = present.iter().copied().filter(|c| !permitted.contains(c)).collect();
+        let Some(&first) = missing.first() else { return Ok(()) };
+
+        let offender = text
+            .chars()
+            .find(|c| crate::types::classify(*c) == Some(first))
+            .expect("the class was found in this very text");
+        let all: Vec<_> = permitted.iter().copied().chain(missing.iter().copied()).collect();
+        Err(Diag::new(
+            format!(
+                "what is written uses only the classes its descriptor permits; this descriptor \
+                 permits {}, but \"{}\" contains `{}`, which is {}",
+                if permitted.is_empty() { "nothing".to_string() } else { describe_classes(permitted) },
+                showable(text),
+                showable(&offender.to_string()),
+                first.word()
+            ),
+            descriptor_span,
+            format!("write print.{}.end", describe_classes(&all)),
         ))
     }
 

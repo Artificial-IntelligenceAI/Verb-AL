@@ -13,13 +13,13 @@ privacy:local, memory:static, type:truth.1-bit, name.string.end: "yes" = 'true'e
 privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string.end: "laughing" = '🤣'end
 privacy:local, memory:static, type:text.utf-8.pointer-and-length, name.string.end: "greeting" = 'hello'end
 
-action:say, source:"signed thirty two"end
-action:say, source:"unsigned eight"end
-action:say, source:"signed sixty four"end
-action:say, source:"half"end
-action:say, source:"brain float"end
-action:say, source:"single"end
-action:say, source:"double"end
-action:say, source:"yes"end
-action:say, source:"laughing"end
-action:say, source:"greeting" joined-with ', world'end
+standard-output:print.end:[("signed thirty two")]end
+standard-output:print.end:[("unsigned eight")]end
+standard-output:print.end:[("signed sixty four")]end
+standard-output:print.end:[("half")]end
+standard-output:print.end:[("brain float")]end
+standard-output:print.end:[("single")]end
+standard-output:print.end:[("double")]end
+standard-output:print.end:[("yes")]end
+standard-output:print.end:[("laughing")]end
+standard-output:print.end:[("greeting" joined-with ', world')]end

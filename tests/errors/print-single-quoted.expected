@@ -1,0 +1,6 @@
+tests/errors/print-single-quoted.val:2:35
+file: tests/errors/print-single-quoted.val
+line: 2
+column: 35
+rule broke & where: what is written is either "character content" or a (parenthesised value); 'Hello' is neither
+suggested fix: write "Hello" to print those characters, or parenthesise a value

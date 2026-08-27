@@ -1,0 +1,6 @@
+tests/errors/print-forbidden-class.val:3:17
+file: tests/errors/print-forbidden-class.val
+line: 3
+column: 17
+rule broke & where: what is written uses only the classes its descriptor permits; this descriptor permits string.space.emoji.comma, but "Hello, World!" contains `!`, which is exclamation
+suggested fix: write print.string.space.emoji.comma.exclamation.end

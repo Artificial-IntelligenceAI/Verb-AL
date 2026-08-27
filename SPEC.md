@@ -35,7 +35,8 @@ statement := attribute ("," attribute)* terminator
 attribute := key [descriptor] ":" value
 ```
 
-There are three kinds: declarations (§3), actions (§4) and permissions (§5).
+There are four kinds: declarations (§3), actions (§4), writes (§5) and
+permissions (§6).
 
 Two kinds of dotted **descriptor** appear, and the difference is deliberate:
 
@@ -51,8 +52,12 @@ chain stops and the value begins.
 
 | Quote | Means |
 |---|---|
-| `"double"` | an **identifier** — a name being declared, or a reference to one |
+| `"double"` | a run of characters whose composition is declared — a name (§3.4), a reference to one, or literal content being written (§5) |
 | `'single'` | a **value literal** |
+
+Double quotes always surround characters the program is talking about *as
+characters*, which is why a class descriptor attaches to them and why they are
+checked against it. Single quotes surround a value.
 
 The split exists so that a name may contain spaces, commas, emoji or anything
 else without ever colliding with the punctuation of the attribute list.
@@ -182,7 +187,6 @@ could not be written at all.
 
 ```
 action:note, remark:'…'end                       — a comment; evaluated by nobody
-action:say, source:<expr>end                     — write the value and a newline to standard output
 action:assign, target:"NAME", value:<expr>end    — store into an existing variable
 ```
 
@@ -215,7 +219,41 @@ A block introduces a scope. Names declared inside it leave scope at
 `end-branch` / `end-repetition`, whatever their `memory` class. Shadowing an
 existing name is a compile error.
 
-## 5. Permissions
+## 5. Writing to standard output
+
+```
+standard-output:print.string.space.comma.exclamation.end:["Hello, World!"]end
+```
+
+A write names its destination, declares which character classes its literal
+content draws on, and lists what to write between brackets. The whole is
+followed by a single newline.
+
+The descriptor is the same construct as a name descriptor (§3.4) doing the same
+job: `print.<classes>.end` **permits** the classes the literal content may draw
+on, and is checked. It may permit classes the content never uses; it may not
+omit one the content does use. The classes are those of §3.4 plus `plus`,
+`newline`, `tab` and `carriage-return`, which literal content can contain and a
+name in practice will not.
+
+Between the brackets, comma-separated, two kinds of thing:
+
+| Written as | Is |
+|---|---|
+| `"…"` | literal character content, governed by the descriptor |
+| `(…)` | a value — any expression (§7) — printed as its type prints (§8) |
+
+A parenthesised value is not literal content, so the descriptor says nothing
+about it: `standard-output:print.end:[("count")]end` writes a number under a
+descriptor that permits nothing, and is correct, because the statement contains
+no literal characters at all. What a computed value prints is fixed by its type,
+not by the program text.
+
+Double quotes here mean what they mean in a declaration: a run of characters
+whose composition is being declared. Single quotes are values, and a value
+between the brackets must be parenthesised to say so.
+
+## 6. Permissions
 
 The compiler does not assume it may speak. A program that has not permitted
 error messages does not receive error messages: it fails, with a status and
@@ -244,7 +282,7 @@ applies to the whole of it.
 Runtime faults are not covered. `compiler:` grants concern the compiler, and a
 program that divides by zero while running still says so.
 
-### 5.1 The shape of a report
+### 6.1 The shape of a report
 
 A permitted diagnostic is six lines: a location a terminal will turn into a
 link, then the same facts spelled out and labelled, because a report that made
@@ -268,7 +306,7 @@ recorded diagnostic and insists on all six lines.
 
 Compilation stops at the first broken rule, so a report describes one.
 
-## 6. Expressions
+## 7. Expressions
 
 ```
 expr    := primary | unary primary | primary binary primary
@@ -299,7 +337,7 @@ fact left implicit, and this language does not leave facts implicit:
 There is **no implicit conversion of any kind**. An integer and a float may not
 meet in the same operator.
 
-## 7. Runtime semantics
+## 8. Runtime semantics
 
 **Integer arithmetic wraps** at the declared width, signed and unsigned alike;
 there is no undefined behaviour. LLVM `add`/`sub`/`mul` are emitted without
@@ -329,7 +367,7 @@ under `verbal.<index>.<ascii echo of the name>`. This matters only to
 `privacy:public`, whose exported symbol is that mangled form rather than the
 name as written.
 
-## 8. Deliberately absent from version 1
+## 9. Deliberately absent from version 1
 
 Functions — the user has not yet decided their syntax, and guessing would be
 worse than waiting. Also absent: aggregates (lists, records), imports, explicit

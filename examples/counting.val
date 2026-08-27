@@ -7,5 +7,5 @@ privacy:local, memory:automatic, type:integer.1-sign-bit.31-value-bits.twos-comp
 action:repetition, while:"count" less-than '5',
   do:
     action:assign, target:"count", value:"count" plus '1'end
-    action:say, source:"count"end
+    standard-output:print.end:[("count")]end
   end-repetition
