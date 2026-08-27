@@ -5,9 +5,9 @@ action:note, remark:'A write states which character classes its literal content 
 privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "answer" = '42'end
 privacy:local, memory:static, type:text.utf-8.pointer-and-length, name.string.end: "who" = 'world'end
 
-standard-output:print.string.space.comma.exclamation.end:["Hello, World!"]end
-standard-output:print.string.space.end:["the answer is ", ("answer")]end
-standard-output:print.end:[("answer")]end
-standard-output:print.string.space.end:["hello ", ("who"), " and goodbye"]end
-standard-output:print.string.newline.tab.end:["over\ttwo\nlines"]end
-standard-output:print.emoji.space.end:["🤣 🎉"]end
+standard-output:print.string.space.comma.exclamation.newline-too.end:["Hello, World!"]end
+standard-output:print.string.space.newline-too.end:["the answer is ", ("answer")]end
+standard-output:print.newline-too.end:[("answer")]end
+standard-output:print.string.space.newline-too.end:["hello ", ("who"), " and goodbye"]end
+standard-output:print.string.newline.tab.newline-too.end:["over\ttwo\nlines"]end
+standard-output:print.emoji.space.newline-too.end:["🤣 🎉"]end

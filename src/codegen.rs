@@ -222,14 +222,16 @@ impl<'ctx> Backend<'ctx> {
                 let v = self.eval(value);
                 self.builder.build_store(self.place_ptr(*place), v).unwrap();
             }
-            TStmt::Print { parts } => {
+            TStmt::Print { parts, newline } => {
                 for part in parts {
                     let ty = part.ty();
                     let v = self.eval(part);
                     self.say(v, ty);
                 }
-                let newline = self.cstring("\n");
-                self.call_printf(newline, &[]);
+                if *newline {
+                    let fmt = self.cstring("\n");
+                    self.call_printf(fmt, &[]);
+                }
             }
             TStmt::Branch { cond, then, otherwise } => {
                 let c = self.eval(cond).into_int_value();

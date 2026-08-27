@@ -21,8 +21,12 @@ Writing works the same way. A write declares which character classes its
 literal content draws on, and that claim is checked too:
 
 ```
-standard-output:print.string.space.comma.exclamation.end:["Hello, World!"]end
+standard-output:print.string.space.comma.exclamation.newline-too.end:["Hello, World!"]end
 ```
+
+Including the newline. A write ends with one only when it says `newline-too`,
+because an automatic newline would be a character in the output that nothing in
+the program accounts for.
 
 [`SPEC.md`](SPEC.md) is the language definition.
 
@@ -71,6 +75,7 @@ verbal check examples/fizzbuzz.val      # report errors and stop
 | [`memory.val`](examples/memory.val) | `static` and `automatic` telling themselves apart |
 | [`layouts.val`](examples/layouts.val) | every type, printing at its declared precision |
 | [`writing.val`](tests/programs/writing.val) | literal content and computed values in one write |
+| [`newlines.val`](tests/programs/newlines.val) | building one line out of several writes |
 
 `layouts.val` prints one tenth four times:
 
@@ -138,7 +143,7 @@ descriptor forgets a class is told which character gave it away:
 
 ```
 rule broke & where: what is written uses only the classes its descriptor permits; this descriptor permits string.space.emoji.comma, but "Hello, World!" contains `!`, which is exclamation
-suggested fix: write print.string.space.emoji.comma.exclamation.end
+suggested fix: write print.string.space.emoji.comma.exclamation.newline-too.end
 ```
 
 Recorded transcripts of every diagnostic live in [`tests/errors`](tests/errors);

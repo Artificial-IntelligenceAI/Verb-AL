@@ -12,7 +12,7 @@ action:repetition, while:"round" less-than '3',
     action:assign, target:"remembered", value:"remembered" plus '1'end
     action:assign, target:"forgotten", value:"forgotten" plus '1'end
 
-    standard-output:print.string.space.colon.end:["remembered: ", ("remembered")]end
-    standard-output:print.string.space.colon.end:["forgotten:  ", ("forgotten")]end
+    standard-output:print.string.space.colon.newline-too.end:["remembered: ", ("remembered")]end
+    standard-output:print.string.space.colon.newline-too.end:["forgotten:  ", ("forgotten")]end
     action:assign, target:"round", value:"round" plus '1'end
   end-repetition

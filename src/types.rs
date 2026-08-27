@@ -272,3 +272,19 @@ pub fn classes_of(name: &str) -> Result<Vec<CharClass>, char> {
 pub fn describe_classes(classes: &[CharClass]) -> String {
     classes.iter().map(|c| c.word()).collect::<Vec<_>>().join(".")
 }
+
+/// A whole print descriptor, written the canonical way: the permitted classes
+/// in the order given, then `newline-too` if the write ends with one.
+pub fn describe_print(classes: &[CharClass], newline: bool) -> String {
+    let mut parts: Vec<&str> = classes.iter().map(|c| c.word()).collect();
+    if newline {
+        parts.push(NEWLINE_TOO);
+    }
+    parts.push("end");
+    format!("print.{}", parts.join("."))
+}
+
+/// Not a character class: a print descriptor writes this to ask for a trailing
+/// newline. Distinct from the `newline` class, which permits a newline
+/// *within* what is written.
+pub const NEWLINE_TOO: &str = "newline-too";

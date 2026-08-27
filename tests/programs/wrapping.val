@@ -10,6 +10,6 @@ action:assign, target:"signed byte", value:"signed byte" plus '1'end
 action:assign, target:"unsigned byte", value:"unsigned byte" plus '1'end
 action:assign, target:"nibble", value:"nibble" times '3'end
 
-standard-output:print.end:[("signed byte")]end
-standard-output:print.end:[("unsigned byte")]end
-standard-output:print.end:[("nibble")]end
+standard-output:print.newline-too.end:[("signed byte")]end
+standard-output:print.newline-too.end:[("unsigned byte")]end
+standard-output:print.newline-too.end:[("nibble")]end

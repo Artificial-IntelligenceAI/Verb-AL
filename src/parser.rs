@@ -250,6 +250,13 @@ impl<'a> Parser<'a> {
             if w == "end" {
                 break;
             }
+            if w == crate::types::NEWLINE_TOO {
+                return Err(Diag::new(
+                    "`newline-too` says what to write after the content, and a name is not written",
+                    s,
+                    "delete `.newline-too` — it belongs on a print descriptor",
+                ));
+            }
             let Some(class) = CharClass::from_word(&w) else {
                 return Err(Diag::new(
                     format!("a name descriptor permits character classes; `{}` is not one", w),
@@ -361,43 +368,67 @@ impl<'a> Parser<'a> {
     fn print(&mut self) -> Result<Stmt, Diag> {
         let start = self.expect_word("standard-output", "to begin a write")?;
         self.expect(Tok::Colon, "after `standard-output`")?;
-        let (classes, classes_span) = self.print_descriptor()?;
+        let (classes, newline, classes_span) = self.print_descriptor()?;
         self.expect(Tok::Colon, "after the print descriptor")?;
         self.expect(Tok::LBracket, "to open what is written")?;
 
+        // The brackets may be empty: with `newline-too` that writes a blank
+        // line, and without it, nothing at all.
         let mut items = Vec::new();
-        loop {
-            items.push(self.print_item()?);
-            if *self.peek() == Tok::Comma {
-                self.bump();
-                continue;
+        if *self.peek() != Tok::RBracket {
+            loop {
+                items.push(self.print_item()?);
+                if *self.peek() == Tok::Comma {
+                    self.bump();
+                    continue;
+                }
+                break;
             }
-            break;
         }
         self.expect(Tok::RBracket, "to close what is written")?;
         let end = self.expect_word("end", "to close the write")?;
-        Ok(Stmt::Print { classes, classes_span, items, span: start.to(end) })
+        Ok(Stmt::Print { classes, newline, classes_span, items, span: start.to(end) })
     }
 
-    /// `print.string.space.end` — like a name descriptor, but it may be empty,
-    /// since a write need not contain any literal characters at all.
-    fn print_descriptor(&mut self) -> Result<(Vec<CharClass>, Span), Diag> {
+    /// `print.string.space.newline-too.end` — like a name descriptor, but it
+    /// may be empty, since a write need not contain any literal characters at
+    /// all, and it may carry `newline-too`, which is not a class.
+    fn print_descriptor(&mut self) -> Result<(Vec<CharClass>, bool, Span), Diag> {
         let start = self.expect_word("print", "to say what is being done to standard output")?;
         let mut classes = Vec::new();
+        let mut newline = false;
         let mut span = start;
         loop {
             self.expect(Tok::Dot, "in the print descriptor")?;
-            let (w, s) = self.any_word("a character class, or `end` to close the descriptor")?;
+            let (w, s) = self.any_word(
+                "a character class, `newline-too`, or `end` to close the descriptor",
+            )?;
             span = span.to(s);
             if w == "end" {
                 break;
             }
+            if w == crate::types::NEWLINE_TOO {
+                if newline {
+                    return Err(Diag::new(
+                        "a write ends with one newline at most; `newline-too` appears twice",
+                        s,
+                        "delete this second `.newline-too`",
+                    ));
+                }
+                newline = true;
+                continue;
+            }
             let Some(class) = CharClass::from_word(&w) else {
                 return Err(Diag::new(
-                    format!("a print descriptor permits character classes; `{}` is not one", w),
+                    format!(
+                        "a print descriptor holds character classes and `newline-too`; \
+                         `{}` is neither",
+                        w
+                    ),
                     s,
-                    "use one of string, digit, space, comma, period, hyphen, underscore, \
-                     apostrophe, exclamation, question, colon, slash, plus, newline, tab, carriage-return, emoji",
+                    "use `newline-too` to end the write with a newline, or one of string, digit, \
+                     space, comma, period, hyphen, underscore, apostrophe, exclamation, question, \
+                     colon, slash, plus, newline, tab, carriage-return, emoji",
                 ));
             };
             if classes.contains(&class) {
@@ -412,7 +443,7 @@ impl<'a> Parser<'a> {
             }
             classes.push(class);
         }
-        Ok((classes, span))
+        Ok((classes, newline, span))
     }
 
     fn print_item(&mut self) -> Result<PrintItem, Diag> {

@@ -3,4 +3,4 @@ file: tests/errors/print-control-character.val
 line: 3
 column: 17
 rule broke & where: what is written uses only the classes its descriptor permits; this descriptor permits string, but "over\ntwo lines" contains `\n`, which is newline
-suggested fix: write print.string.newline.space.end
+suggested fix: write print.string.newline.space.newline-too.end

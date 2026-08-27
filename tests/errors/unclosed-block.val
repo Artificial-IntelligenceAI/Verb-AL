@@ -3,4 +3,4 @@ allow[compiler:error.error-message]end
 privacy:local, memory:static, type:truth.1-bit, name.string.end: "go" = 'true'end
 action:branch, condition:"go",
   then:
-    standard-output:print.end:["inside"]end
+    standard-output:print.newline-too.end:["inside"]end

@@ -1,0 +1,13 @@
+allow[compiler:error.error-message]end
+
+action:note, remark:'A write ends with a newline only when it says newline-too. Without it, writes run together, which is how a line is built from parts.'end
+
+standard-output:print.string.end:["no"]end
+standard-output:print.string.end:["newline"]end
+standard-output:print.string.end:["between"]end
+standard-output:print.newline-too.end:[]end
+
+action:note, remark:'An empty write with newline-too is a blank line.'end
+standard-output:print.newline-too.end:[]end
+
+standard-output:print.string.space.comma.exclamation.newline-too.end:["Hello, World!"]end

@@ -1,6 +1,6 @@
-tests/errors/unknown-name.val:3:29
+tests/errors/unknown-name.val:3:41
 file: tests/errors/unknown-name.val
 line: 3
-column: 29
+column: 41
 rule broke & where: every name must be declared before it is used; "never declared" never was
 suggested fix: declare it first, stating its privacy, memory, type and name descriptor

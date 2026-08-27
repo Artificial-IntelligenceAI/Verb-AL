@@ -42,6 +42,9 @@ pub enum Stmt {
     /// draw on, exactly as a name descriptor does for a name.
     Print {
         classes: Vec<CharClass>,
+        /// Whether the descriptor said `newline-too`. A write ends with a
+        /// newline only when it says so.
+        newline: bool,
         classes_span: Span,
         items: Vec<PrintItem>,
         span: Span,

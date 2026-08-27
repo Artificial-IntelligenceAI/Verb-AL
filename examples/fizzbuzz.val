@@ -11,17 +11,17 @@ action:repetition, while:"n" at-most '15',
 
     action:branch, condition:"byThree" and "byFive",
       then:
-        standard-output:print.string.end:["FizzBuzz"]end
+        standard-output:print.string.newline-too.end:["FizzBuzz"]end
       otherwise:
         action:branch, condition:"byThree",
           then:
-            standard-output:print.string.end:["Fizz"]end
+            standard-output:print.string.newline-too.end:["Fizz"]end
           otherwise:
             action:branch, condition:"byFive",
               then:
-                standard-output:print.string.end:["Buzz"]end
+                standard-output:print.string.newline-too.end:["Buzz"]end
               otherwise:
-                standard-output:print.end:[("n")]end
+                standard-output:print.newline-too.end:[("n")]end
               end-branch
           end-branch
       end-branch

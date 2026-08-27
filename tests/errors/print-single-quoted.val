@@ -1,2 +1,2 @@
 allow[compiler:error.error-message]end
-standard-output:print.string.end:['Hello']end
+standard-output:print.string.newline-too.end:['Hello']end

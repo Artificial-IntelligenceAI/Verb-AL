@@ -19,6 +19,10 @@ verb-al — a language in which nothing is implicit
 ";
 
 fn main() -> ExitCode {
+    // Rust ignores SIGPIPE; a compiled Verb-AL program does not. Restore the
+    // default so `verbal run … | head` and the compiled binary die alike.
+    unsafe { libc::signal(libc::SIGPIPE, libc::SIG_DFL) };
+
     let args: Vec<String> = std::env::args().skip(1).collect();
     let Some(command) = args.first() else {
         eprint!("{}", USAGE);

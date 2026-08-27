@@ -222,12 +222,12 @@ existing name is a compile error.
 ## 5. Writing to standard output
 
 ```
-standard-output:print.string.space.comma.exclamation.end:["Hello, World!"]end
+standard-output:print.string.space.comma.exclamation.newline-too.end:["Hello, World!"]end
 ```
 
 A write names its destination, declares which character classes its literal
-content draws on, and lists what to write between brackets. The whole is
-followed by a single newline.
+content draws on, says whether it ends in a newline, and lists what to write
+between brackets.
 
 The descriptor is the same construct as a name descriptor (§3.4) doing the same
 job: `print.<classes>.end` **permits** the classes the literal content may draw
@@ -235,6 +235,29 @@ on, and is checked. It may permit classes the content never uses; it may not
 omit one the content does use. The classes are those of §3.4 plus `plus`,
 `newline`, `tab` and `carriage-return`, which literal content can contain and a
 name in practice will not.
+
+### 5.1 `newline-too`
+
+A write ends with a newline only when its descriptor says `newline-too`. There
+is no automatic newline, because an automatic newline is a character in the
+output that nothing in the program accounts for.
+
+```
+standard-output:print.string.end:["no"]end
+standard-output:print.string.end:["newline"]end
+standard-output:print.string.newline-too.end:["between"]end
+```
+
+writes `nonewlinebetween` and one newline. That is how a line is built from
+parts. An empty write asking for a newline —
+`standard-output:print.newline-too.end:[]end` — is a blank line.
+
+`newline-too` is **not** a character class, and the two neighbouring words mean
+different things: the `newline` class permits a newline *within* what is
+written, while `newline-too` appends one *after* it. A name descriptor rejects
+`newline-too` outright, since a name is not written anywhere.
+
+It may appear anywhere in the chain, like a class, but never twice.
 
 Between the brackets, comma-separated, two kinds of thing:
 
@@ -244,9 +267,9 @@ Between the brackets, comma-separated, two kinds of thing:
 | `(…)` | a value — any expression (§7) — printed as its type prints (§8) |
 
 A parenthesised value is not literal content, so the descriptor says nothing
-about it: `standard-output:print.end:[("count")]end` writes a number under a
-descriptor that permits nothing, and is correct, because the statement contains
-no literal characters at all. What a computed value prints is fixed by its type,
+about it: `standard-output:print.newline-too.end:[("count")]end` writes a number
+under a descriptor that permits no classes at all, and is correct, because the
+statement contains no literal characters. What a computed value prints is fixed by its type,
 not by the program text.
 
 Double quotes here mean what they mean in a declaration: a run of characters

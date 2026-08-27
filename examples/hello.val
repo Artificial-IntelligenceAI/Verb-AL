@@ -4,4 +4,4 @@ action:note, remark:'The canonical Verb-AL declaration. Java would leave the bit
 
 privacy:local, memory:static, type:float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits, name.string.space.comma.emoji.end: "Help me, please 🤣" = '200'end
 
-standard-output:print.end:[("Help me, please 🤣")]end
+standard-output:print.newline-too.end:[("Help me, please 🤣")]end

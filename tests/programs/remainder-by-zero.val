@@ -2,4 +2,4 @@ allow[compiler:error.error-message]end
 
 privacy:local, memory:automatic, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "zero" = '0'end
 
-standard-output:print.end:[('7' remainder-of "zero")]end
+standard-output:print.newline-too.end:[('7' remainder-of "zero")]end

@@ -94,14 +94,20 @@ impl Checker {
 
             Stmt::Decl(d) => self.declaration(d),
 
-            Stmt::Print { classes, classes_span, items, .. } => {
+            Stmt::Print { classes, newline, classes_span, items, .. } => {
                 let mut parts = Vec::new();
                 for item in items {
                     match item {
                         // Literal character content is what the descriptor
                         // governs, exactly as a name descriptor governs a name.
                         ast::PrintItem::Literal { text, span } => {
-                            self.verify_print_descriptor(text, *span, classes, *classes_span)?;
+                            self.verify_print_descriptor(
+                                text,
+                                *span,
+                                classes,
+                                *newline,
+                                *classes_span,
+                            )?;
                             parts.push(TExpr::Const {
                                 value: Value::Text(text.clone()),
                                 ty: Type::Text,
@@ -110,7 +116,7 @@ impl Checker {
                         ast::PrintItem::Value(expr) => parts.push(self.expr(expr, None)?),
                     }
                 }
-                Ok(Some(TStmt::Print { parts }))
+                Ok(Some(TStmt::Print { parts, newline: *newline }))
             }
 
             Stmt::Assign { target, target_span, value, .. } => {
@@ -233,6 +239,7 @@ impl Checker {
         text: &str,
         text_span: Span,
         permitted: &[crate::types::CharClass],
+        newline: bool,
         descriptor_span: Span,
     ) -> Result<(), Diag> {
         let present = classes_of(text).map_err(|c| {
@@ -263,7 +270,9 @@ impl Checker {
                 first.word()
             ),
             descriptor_span,
-            format!("write print.{}.end", describe_classes(&all)),
+            // Rebuild the whole descriptor, so applying the fix cannot silently
+            // drop a `newline-too` the write already asked for.
+            format!("write {}", crate::types::describe_print(&all, newline)),
         ))
     }
 

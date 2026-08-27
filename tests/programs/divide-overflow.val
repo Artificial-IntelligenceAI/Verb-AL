@@ -3,5 +3,5 @@ allow[compiler:error.error-message]end
 privacy:local, memory:automatic, type:integer.1-sign-bit.7-value-bits.twos-complement, name.string.end: "least" = '-128'end
 privacy:local, memory:automatic, type:integer.1-sign-bit.7-value-bits.twos-complement, name.string.space.end: "minus one" = '-1'end
 
-standard-output:print.string.end:["before"]end
-standard-output:print.end:[("least" divided-by "minus one")]end
+standard-output:print.string.newline-too.end:["before"]end
+standard-output:print.newline-too.end:[("least" divided-by "minus one")]end
