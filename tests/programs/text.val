@@ -1,0 +1,13 @@
+action:note, remark:'Text is a pointer and a length; joining allocates, comparing walks the bytes.'end
+
+privacy:local, memory:automatic, type:text.utf-8.pointer-and-length, name.string.end: "greeting" = 'hello'end
+privacy:local, memory:automatic, type:text.utf-8.pointer-and-length, name.string.end: "empty" = ''end
+
+action:assign, target:"greeting", value:"greeting" joined-with ', world'end
+action:say, source:"greeting"end
+action:say, source:"greeting" equal-to 'hello, world'end
+action:say, source:"greeting" equal-to 'hello'end
+action:say, source:"greeting" not-equal-to 'hello'end
+action:say, source:"empty" joined-with "empty"end
+action:say, source:"empty" equal-to ''end
+action:say, source:'lines\nand\ttabs'end

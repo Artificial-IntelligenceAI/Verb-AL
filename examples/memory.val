@@ -1,0 +1,19 @@
+action:note, remark:'A static cell is filled once, before the program begins. An automatic cell is filled every time control reaches its declaration. Three rounds tell them apart.'end
+
+privacy:local, memory:automatic, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "round" = '0'end
+
+action:repetition, while:"round" less-than '3',
+  do:
+    privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "remembered" = '0'end
+    privacy:local, memory:automatic, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "forgotten" = '0'end
+
+    action:assign, target:"remembered", value:"remembered" plus '1'end
+    action:assign, target:"forgotten", value:"forgotten" plus '1'end
+
+    action:say, source:'remembered:'end
+    action:say, source:"remembered"end
+    action:say, source:'forgotten:'end
+    action:say, source:"forgotten"end
+
+    action:assign, target:"round", value:"round" plus '1'end
+  end-repetition

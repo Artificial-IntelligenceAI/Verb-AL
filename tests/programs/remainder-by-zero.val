@@ -1,0 +1,3 @@
+privacy:local, memory:automatic, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "zero" = '0'end
+
+action:say, source:'7' remainder-of "zero"end

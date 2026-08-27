@@ -1,0 +1,6 @@
+error: a static initializer must be knowable before the program begins, so it cannot read a variable
+ --> tests/errors/static-not-constant.val:2:112
+  |
+2 | privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "copy" = "source"end
+  |                                                                                                                ^^^^^^^^
+  = declare it `memory:automatic` if it must be worked out while running

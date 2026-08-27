@@ -1,0 +1,7 @@
+action:note, remark:'A fault stops the program in both backends, with the same words and the same status.'end
+
+privacy:local, memory:automatic, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "zero" = '0'end
+
+action:say, source:'before'end
+action:say, source:'10' divided-by "zero"end
+action:say, source:'after'end

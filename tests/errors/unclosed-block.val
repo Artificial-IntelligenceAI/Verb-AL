@@ -1,0 +1,4 @@
+privacy:local, memory:static, type:truth.1-bit, name.string.end: "go" = 'true'end
+action:branch, condition:"go",
+  then:
+    action:say, source:'inside'end

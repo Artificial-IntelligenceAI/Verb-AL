@@ -1,0 +1,23 @@
+action:note, remark:'One declaration of every type Verb-AL version one knows, each describing its own representation.'end
+
+privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.space.end: "signed thirty two" = '-2147483648'end
+privacy:local, memory:static, type:integer.0-sign-bits.8-value-bits.unsigned-binary, name.string.space.end: "unsigned eight" = '255'end
+privacy:local, memory:static, type:integer.1-sign-bit.63-value-bits.twos-complement, name.string.space.end: "signed sixty four" = '9223372036854775807'end
+privacy:local, memory:static, type:float.1-sign-bit.5-exponent-bits.10-explicit-mantissa-bits, name.string.end: "half" = '0.1'end
+privacy:local, memory:static, type:float.1-sign-bit.8-exponent-bits.7-explicit-mantissa-bits, name.string.space.end: "brain float" = '0.1'end
+privacy:local, memory:static, type:float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits, name.string.end: "single" = '0.1'end
+privacy:local, memory:static, type:float.1-sign-bit.11-exponent-bits.52-explicit-mantissa-bits, name.string.end: "double" = '0.1'end
+privacy:local, memory:static, type:truth.1-bit, name.string.end: "yes" = 'true'end
+privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string.end: "laughing" = '🤣'end
+privacy:local, memory:static, type:text.utf-8.pointer-and-length, name.string.end: "greeting" = 'hello'end
+
+action:say, source:"signed thirty two"end
+action:say, source:"unsigned eight"end
+action:say, source:"signed sixty four"end
+action:say, source:"half"end
+action:say, source:"brain float"end
+action:say, source:"single"end
+action:say, source:"double"end
+action:say, source:"yes"end
+action:say, source:"laughing"end
+action:say, source:"greeting" joined-with ', world'end

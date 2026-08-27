@@ -1,0 +1,9 @@
+action:note, remark:'Signedness decides which comparison is emitted, so the same bits order differently.'end
+
+privacy:local, memory:automatic, type:integer.1-sign-bit.7-value-bits.twos-complement, name.string.end: "negative" = '-1'end
+privacy:local, memory:automatic, type:integer.0-sign-bits.8-value-bits.unsigned-binary, name.string.end: "large" = '255'end
+
+action:say, source:"negative" less-than '0'end
+action:say, source:"large" greater-than '0'end
+action:say, source:"negative" at-most '-1'end
+action:say, source:not ("large" equal-to '254')end

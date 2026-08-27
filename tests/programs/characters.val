@@ -1,0 +1,12 @@
+action:note, remark:'Every UTF-8 length, encoded by the compiler and by Rust to the same bytes.'end
+
+privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string.end: "one" = 'A'end
+privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string.end: "two" = '\u{00E9}'end
+privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string.end: "three" = '\u{4E2D}'end
+privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string.end: "four" = '🤣'end
+
+action:say, source:"one"end
+action:say, source:"two"end
+action:say, source:"three"end
+action:say, source:"four"end
+action:say, source:"one" less-than "four"end

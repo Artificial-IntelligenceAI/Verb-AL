@@ -1,0 +1,3 @@
+privacy:local, memory:automatic, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "whole" = '1'end
+privacy:local, memory:automatic, type:float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits, name.string.end: "fraction" = '1.5'end
+action:say, source:"whole" plus "fraction"end

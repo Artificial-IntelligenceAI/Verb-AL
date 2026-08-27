@@ -1,0 +1,15 @@
+action:note, remark:'Arithmetic rounds to the declared layout at every step, and NaN differs from itself.'end
+
+privacy:local, memory:automatic, type:float.1-sign-bit.5-exponent-bits.10-explicit-mantissa-bits, name.string.end: "small" = '1'end
+privacy:local, memory:automatic, type:float.1-sign-bit.11-exponent-bits.52-explicit-mantissa-bits, name.string.end: "nothing" = 'nan'end
+privacy:local, memory:automatic, type:float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits, name.string.end: "third" = '1'end
+
+action:assign, target:"small", value:"small" divided-by '3'end
+action:assign, target:"third", value:"third" divided-by '3'end
+
+action:say, source:"small"end
+action:say, source:"third"end
+action:say, source:"nothing"end
+action:say, source:"nothing" equal-to "nothing"end
+action:say, source:"nothing" not-equal-to "nothing"end
+action:say, source:negated "third"end

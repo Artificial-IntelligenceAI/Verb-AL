@@ -1,0 +1,5 @@
+error: expected `memory` as the second attribute of a declaration, found `type`
+ --> tests/errors/missing-attribute.val:1:16
+  |
+1 | privacy:local, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "n" = '1'end
+  |                ^^^^

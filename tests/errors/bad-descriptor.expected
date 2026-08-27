@@ -1,0 +1,8 @@
+error: the name descriptor does not match the name
+ --> tests/errors/bad-descriptor.val:1:86
+  |
+1 | privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "two words" = '1'end
+  |                                                                                      ^^^^^^^^^^^^^^^
+  = the descriptor says: string
+  = but "two words" contains: string.space
+  = write: name.string.space.end

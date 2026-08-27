@@ -1,0 +1,5 @@
+privacy:local, memory:automatic, type:integer.1-sign-bit.7-value-bits.twos-complement, name.string.end: "least" = '-128'end
+privacy:local, memory:automatic, type:integer.1-sign-bit.7-value-bits.twos-complement, name.string.space.end: "minus one" = '-1'end
+
+action:say, source:'before'end
+action:say, source:"least" divided-by "minus one"end

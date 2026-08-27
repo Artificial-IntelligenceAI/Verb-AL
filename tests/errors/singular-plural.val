@@ -1,0 +1,1 @@
+privacy:local, memory:static, type:integer.1-sign-bits.31-value-bits.twos-complement, name.string.end: "n" = '1'end

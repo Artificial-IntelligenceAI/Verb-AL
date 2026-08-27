@@ -1,0 +1,28 @@
+action:note, remark:'FizzBuzz, with every fact stated.'end
+
+privacy:local, memory:automatic, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "n" = '1'end
+
+action:repetition, while:"n" at-most '15',
+  do:
+    privacy:local, memory:automatic, type:truth.1-bit, name.string.end: "byThree" = ("n" remainder-of '3') equal-to '0'end
+    privacy:local, memory:automatic, type:truth.1-bit, name.string.end: "byFive" = ("n" remainder-of '5') equal-to '0'end
+
+    action:branch, condition:"byThree" and "byFive",
+      then:
+        action:say, source:'FizzBuzz'end
+      otherwise:
+        action:branch, condition:"byThree",
+          then:
+            action:say, source:'Fizz'end
+          otherwise:
+            action:branch, condition:"byFive",
+              then:
+                action:say, source:'Buzz'end
+              otherwise:
+                action:say, source:"n"end
+              end-branch
+          end-branch
+      end-branch
+
+    action:assign, target:"n", value:"n" plus '1'end
+  end-repetition

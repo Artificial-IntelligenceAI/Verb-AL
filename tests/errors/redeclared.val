@@ -1,0 +1,2 @@
+privacy:local, memory:static, type:truth.1-bit, name.string.end: "flag" = 'true'end
+privacy:local, memory:static, type:truth.1-bit, name.string.end: "flag" = 'false'end

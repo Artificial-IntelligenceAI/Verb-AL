@@ -1,0 +1,13 @@
+action:note, remark:'Integers wrap at the width their descriptor declares, signed and unsigned alike.'end
+
+privacy:local, memory:automatic, type:integer.1-sign-bit.7-value-bits.twos-complement, name.string.space.end: "signed byte" = '127'end
+privacy:local, memory:automatic, type:integer.0-sign-bits.8-value-bits.unsigned-binary, name.string.space.end: "unsigned byte" = '255'end
+privacy:local, memory:automatic, type:integer.1-sign-bit.3-value-bits.twos-complement, name.string.end: "nibble" = '7'end
+
+action:assign, target:"signed byte", value:"signed byte" plus '1'end
+action:assign, target:"unsigned byte", value:"unsigned byte" plus '1'end
+action:assign, target:"nibble", value:"nibble" times '3'end
+
+action:say, source:"signed byte"end
+action:say, source:"unsigned byte"end
+action:say, source:"nibble"end

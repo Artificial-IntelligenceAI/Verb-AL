@@ -1,0 +1,5 @@
+action:note, remark:'The canonical Verb-AL declaration. Java would leave the bit layout, the storage class and the identifier alphabet to its specification. Verb-AL says all three out loud.'end
+
+privacy:local, memory:static, type:float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits, name.string.space.comma.emoji.end: "Help me, please 🤣" = '200'end
+
+action:say, source:"Help me, please 🤣"end

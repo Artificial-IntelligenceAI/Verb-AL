@@ -1,0 +1,2 @@
+privacy:local, memory:automatic, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "source" = '1'end
+privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "copy" = "source"end

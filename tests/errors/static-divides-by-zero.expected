@@ -1,0 +1,6 @@
+error: a value was divided by zero
+ --> tests/errors/static-divides-by-zero.val:1:118
+  |
+1 | privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "impossible" = '1' divided-by '0'end
+  |                                                                                                                      ^^^^^^^^^^^^^^^^^^
+  = a static initializer is worked out while the program is still being built

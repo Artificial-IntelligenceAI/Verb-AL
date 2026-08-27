@@ -1,0 +1,5 @@
+error: write `1-sign-bit`, not `1-sign-bits` — Verb-AL insists the noun agrees with the number
+ --> tests/errors/singular-plural.val:1:44
+  |
+1 | privacy:local, memory:static, type:integer.1-sign-bits.31-value-bits.twos-complement, name.string.end: "n" = '1'end
+  |                                            ^^^^^^^^^^^

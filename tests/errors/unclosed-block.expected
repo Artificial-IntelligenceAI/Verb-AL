@@ -1,0 +1,5 @@
+error: the program ends before this block is closed with `end-branch`
+ --> tests/errors/unclosed-block.val:5:1
+  |
+5 | 
+  | ^
