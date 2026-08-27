@@ -244,6 +244,30 @@ applies to the whole of it.
 Runtime faults are not covered. `compiler:` grants concern the compiler, and a
 program that divides by zero while running still says so.
 
+### 5.1 The shape of a report
+
+A permitted diagnostic is six lines: a location a terminal will turn into a
+link, then the same facts spelled out and labelled, because a report that made
+you infer its own structure would be a poor advertisement for the language.
+
+```
+tests/errors/forbidden-class.val:4:49
+file: tests/errors/forbidden-class.val
+line: 4
+column: 49
+rule broke & where: a name uses only the classes its descriptor permits; this descriptor permits string.digit, but "well-formed" contains `-`, which is hyphen
+suggested fix: write name.string.digit.hyphen.end
+```
+
+`rule broke & where` names the rule that was violated and the place in the
+program that violated it — not merely what the compiler wanted to see.
+`suggested fix` says what to write instead, and is **never empty**: the
+diagnostic type cannot be constructed without one, so a rule with no
+mechanical remedy has to say what to do about it in words. A test walks every
+recorded diagnostic and insists on all six lines.
+
+Compilation stops at the first broken rule, so a report describes one.
+
 ## 6. Expressions
 
 ```

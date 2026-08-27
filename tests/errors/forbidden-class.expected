@@ -1,8 +1,6 @@
-error: this name uses a class its descriptor does not permit
- --> tests/errors/forbidden-class.val:4:49
-  |
-4 | privacy:local, memory:static, type:truth.1-bit, name.string.digit.end: "well-formed" = 'true'end
-  |                                                 ^^^^^^^^^^^^^^^^^^^^^
-  = the descriptor permits: string.digit
-  = but "well-formed" contains `-`, which is hyphen
-  = write: name.string.digit.hyphen.end
+tests/errors/forbidden-class.val:4:49
+file: tests/errors/forbidden-class.val
+line: 4
+column: 49
+rule broke & where: a name uses only the classes its descriptor permits; this descriptor permits string.digit, but "well-formed" contains `-`, which is hyphen
+suggested fix: write name.string.digit.hyphen.end

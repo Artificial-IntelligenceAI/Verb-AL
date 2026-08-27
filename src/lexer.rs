@@ -107,10 +107,10 @@ pub fn lex(text: &str) -> Result<Vec<Token>, Diag> {
         }
 
         return Err(Diag::new(
-            format!("`{}` does not begin anything Verb-AL recognises", c),
+            format!("a statement is built from words, quoted runs and the punctuation `:,.=()[]`; `{}` is none of these", c),
             Span::new(start, start + c.len_utf8()),
-        )
-        .note("names go in \"double quotes\", values in 'single quotes'"));
+            "remove it, or quote it — names go in \"double quotes\" and values in 'single quotes'",
+        ));
     }
 
     let end = text.len();
@@ -137,10 +137,10 @@ fn lex_quoted(
         }
         if c == '\n' {
             return Err(Diag::new(
-                "this quoted run reaches the end of the line without closing",
+                format!("a quoted run must close on the line it opens; this {} never does", quote),
                 Span::new(start, off),
-            )
-            .note(format!("add a closing {}", quote)));
+                format!("add a closing {} before the end of the line", quote),
+            ));
         }
         if c != '\\' {
             value.push(c);
@@ -151,8 +151,9 @@ fn lex_quoted(
         // An escape sequence.
         let Some(&(esc_off, esc)) = bytes.get(j + 1) else {
             return Err(Diag::new(
-                "the program ends in the middle of an escape",
+                "a backslash must be followed by the character it escapes; this one ends the program",
                 Span::new(off, text.len()),
+                "complete the escape, or write `\\\\` if you meant a literal backslash",
             ));
         };
         let simple = match esc {
@@ -175,8 +176,9 @@ fn lex_quoted(
             let mut k = j + 2;
             if bytes.get(k).map(|&(_, c)| c) != Some('{') {
                 return Err(Diag::new(
-                    "a \\u escape must be written \\u{...}",
+                    "a \\u escape names its scalar in braces; the brace is missing",
                     Span::new(off, esc_off + 1),
+                    "write it as \\u{...}, for instance \\u{1F923}",
                 ));
             }
             k += 1;
@@ -191,8 +193,9 @@ fn lex_quoted(
             let close = bytes.get(k).map(|&(o, c)| (o, c));
             let Some((close_off, '}')) = close else {
                 return Err(Diag::new(
-                    "this \\u escape is never closed with `}`",
+                    "a \\u escape closes with `}`; this one never does",
                     Span::new(off, text.len().min(off + 16)),
+                    "add a closing `}` after the hexadecimal digits",
                 ));
             };
             let scalar = u32::from_str_radix(&digits, 16)
@@ -200,8 +203,12 @@ fn lex_quoted(
                 .and_then(char::from_u32)
                 .ok_or_else(|| {
                     Diag::new(
-                        format!("\\u{{{}}} is not a Unicode scalar value", digits),
+                        format!(
+                            "a \\u escape names a Unicode scalar; `{}` is not one",
+                            digits
+                        ),
                         Span::new(off, close_off + 1),
+                        "use hexadecimal digits below 110000, skipping D800 through DFFF",
                     )
                 })?;
             value.push(scalar);
@@ -209,14 +216,17 @@ fn lex_quoted(
             continue;
         }
         return Err(Diag::new(
-            format!("`\\{}` is not an escape Verb-AL knows", esc),
+            format!("`\\{}` is not one of the escapes Verb-AL knows", esc),
             Span::new(off, esc_off + esc.len_utf8()),
-        )
-        .note("the escapes are \\\\ \\' \\\" \\n \\t \\r \\0 and \\u{...}"));
+            "use one of \\\\ \\' \\\" \\n \\t \\r \\0 \\u{...}, or write `\\\\` for a literal backslash",
+        ));
     }
 
-    Err(Diag::new("this quoted run is never closed", Span::new(start, text.len()))
-        .note(format!("add a closing {}", quote)))
+    Err(Diag::new(
+        "a quoted run must be closed; this one runs to the end of the program",
+        Span::new(start, text.len()),
+        format!("add a closing {}", quote),
+    ))
 }
 
 /// Lex as much as can be lexed, ignoring anything unrecognisable.

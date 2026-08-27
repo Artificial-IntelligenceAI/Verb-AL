@@ -1,8 +1,6 @@
-error: this name uses a class its descriptor does not permit
- --> tests/errors/bad-descriptor.val:3:86
-  |
-3 | privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "two words" = '1'end
-  |                                                                                      ^^^^^^^^^^^^^^^
-  = the descriptor permits: string
-  = but "two words" contains ` `, which is space
-  = write: name.string.space.end
+tests/errors/bad-descriptor.val:3:86
+file: tests/errors/bad-descriptor.val
+line: 3
+column: 86
+rule broke & where: a name uses only the classes its descriptor permits; this descriptor permits string, but "two words" contains ` `, which is space
+suggested fix: write name.string.space.end

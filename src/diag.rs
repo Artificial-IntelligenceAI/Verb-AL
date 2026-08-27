@@ -15,23 +15,30 @@ impl Span {
     }
 }
 
+/// A broken rule, in the shape Verb-AL reports it: what rule broke and where,
+/// and what to write instead. Both are required at construction — a diagnostic
+/// that cannot suggest a fix is not finished being written.
 #[derive(Clone, Debug)]
 pub struct Diag {
-    pub msg: String,
+    pub rule: String,
+    pub fix: String,
     pub span: Option<Span>,
-    pub notes: Vec<String>,
 }
 
 impl Diag {
-    pub fn new(msg: impl Into<String>, span: Span) -> Self {
-        Diag { msg: msg.into(), span: Some(span), notes: Vec::new() }
+    pub fn new(rule: impl Into<String>, span: Span, fix: impl Into<String>) -> Self {
+        Diag { rule: rule.into(), fix: fix.into(), span: Some(span) }
     }
-    pub fn bare(msg: impl Into<String>) -> Self {
-        Diag { msg: msg.into(), span: None, notes: Vec::new() }
-    }
-    pub fn note(mut self, note: impl Into<String>) -> Self {
-        self.notes.push(note.into());
+
+    /// Add a further clause to the suggested fix.
+    pub fn also(mut self, extra: impl AsRef<str>) -> Self {
+        self.fix = format!("{}; {}", self.fix, extra.as_ref());
         self
+    }
+
+    /// For the rare fault that belongs to no particular stretch of text.
+    pub fn unplaced(rule: impl Into<String>, fix: impl Into<String>) -> Self {
+        Diag { rule: rule.into(), fix: fix.into(), span: None }
     }
 }
 
@@ -57,39 +64,28 @@ impl Source {
         (line, col)
     }
 
-    fn line_text(&self, line: usize) -> &str {
-        self.text.lines().nth(line - 1).unwrap_or("")
-    }
-
+    /// The report format: a location a terminal will linkify, then the same
+    /// facts spelled out one per line, because Verb-AL leaves nothing implicit
+    /// and that includes what a diagnostic is telling you.
     pub fn render(&self, d: &Diag) -> String {
-        let mut out = format!("error: {}\n", d.msg);
-        if let Some(span) = d.span {
-            let (line, col) = self.line_col(span.start);
-            let text = self.line_text(line);
-            let gutter = line.to_string().len();
-            out.push_str(&format!("{:>w$}--> {}:{}:{}\n", "", self.path, line, col, w = gutter));
-            out.push_str(&format!("{:>w$} |\n", "", w = gutter));
-            out.push_str(&format!("{} | {}\n", line, text));
-            // Underline as many characters as the span covers on this line.
-            let end_on_line = span.end.min(
-                self.text[span.start..].find('\n').map(|i| span.start + i).unwrap_or(self.text.len()),
-            );
-            let width = self.text[span.start..end_on_line].chars().count().max(1);
-            out.push_str(&format!(
-                "{:>w$} | {}{}\n",
-                "",
-                " ".repeat(col - 1),
-                "^".repeat(width),
-                w = gutter
-            ));
-            for note in &d.notes {
-                out.push_str(&format!("{:>w$} = {}\n", "", note, w = gutter));
+        let mut out = String::new();
+        match d.span {
+            Some(span) => {
+                let (line, column) = self.line_col(span.start);
+                out.push_str(&format!("{}:{}:{}\n", self.path, line, column));
+                out.push_str(&format!("file: {}\n", self.path));
+                out.push_str(&format!("line: {}\n", line));
+                out.push_str(&format!("column: {}\n", column));
             }
-        } else {
-            for note in &d.notes {
-                out.push_str(&format!("  = {}\n", note));
+            None => {
+                out.push_str(&format!("{}\n", self.path));
+                out.push_str(&format!("file: {}\n", self.path));
+                out.push_str("line: (the whole file)\n");
+                out.push_str("column: (the whole file)\n");
             }
         }
+        out.push_str(&format!("rule broke & where: {}\n", d.rule));
+        out.push_str(&format!("suggested fix: {}\n", d.fix));
         out
     }
 }

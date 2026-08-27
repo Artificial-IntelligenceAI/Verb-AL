@@ -1,7 +1,6 @@
-error: no float layout has 9 exponent bits and 22 explicit mantissa bits
- --> tests/errors/no-such-layout.val:3:36
-  |
-3 | privacy:local, memory:static, type:float.1-sign-bit.9-exponent-bits.22-explicit-mantissa-bits, name.string.end: "odd" = '1'end
-  |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  = the layouts are 5/10 (half), 8/7 (bfloat), 8/23 (single) and 11/52 (double)
-  = the mantissa count excludes the implicit leading one
+tests/errors/no-such-layout.val:3:36
+file: tests/errors/no-such-layout.val
+line: 3
+column: 36
+rule broke & where: a float layout is one of four; none has 9 exponent bits and 22 explicit mantissa bits
+suggested fix: use 5/10 (half), 8/7 (bfloat), 8/23 (single) or 11/52 (double) — the mantissa count excludes the implicit leading one

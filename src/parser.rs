@@ -8,7 +8,7 @@ use crate::types::{CharClass, FloatKind, Type};
 
 /// Said whenever a declaration's attributes arrive out of order or short.
 const ORDER: &str =
-    "a declaration states, in this order: privacy, memory, type, name — and omits none of them";
+    "a declaration states privacy, memory, type and name in that order, omitting none";
 
 pub fn parse(tokens: &[Token]) -> Result<Vec<Stmt>, Diag> {
     let mut p = Parser { tokens, pos: 0 };
@@ -53,8 +53,14 @@ impl<'a> Parser<'a> {
             Ok(self.bump().span)
         } else {
             Err(Diag::new(
-                format!("expected {} {}, found {}", tok.describe(), context, self.peek().describe()),
+                format!(
+                    "a statement's punctuation is fixed: {} belongs {}, but {} is here instead",
+                    tok.describe(),
+                    context,
+                    self.peek().describe()
+                ),
                 self.peek_span(),
+                format!("write {} here", tok.describe()),
             ))
         }
     }
@@ -64,8 +70,14 @@ impl<'a> Parser<'a> {
             Ok(self.bump().span)
         } else {
             Err(Diag::new(
-                format!("expected `{}` {}, found {}", word, context, self.peek().describe()),
+                format!(
+                    "`{}` belongs {}, but {} is here instead",
+                    word,
+                    context,
+                    self.peek().describe()
+                ),
                 self.peek_span(),
+                format!("write `{}` here", word),
             ))
         }
     }
@@ -77,8 +89,9 @@ impl<'a> Parser<'a> {
                 Ok((w, span))
             }
             other => Err(Diag::new(
-                format!("expected {}, found {}", context, other.describe()),
+                format!("{} belongs here, but {} is here instead", context, other.describe()),
                 self.peek_span(),
+                format!("write {} here", context),
             )),
         }
     }
@@ -90,10 +103,14 @@ impl<'a> Parser<'a> {
                 Ok((n, span))
             }
             other => Err(Diag::new(
-                format!("expected {} in double quotes, found {}", context, other.describe()),
+                format!(
+                    "a name is written in double quotes; {} is here instead, where {} belongs",
+                    other.describe(),
+                    context
+                ),
                 self.peek_span(),
-            )
-            .note("names are written in \"double quotes\"; values in 'single quotes'")),
+                "put the name in \"double quotes\" — 'single quotes' mean a value",
+            )),
         }
     }
 
@@ -105,12 +122,12 @@ impl<'a> Parser<'a> {
             Some("action") => self.action(),
             Some("allow") => self.permission(),
             _ => Err(Diag::new(
-                format!("expected a statement, found {}", self.peek().describe()),
+                format!(
+                    "every statement begins with `privacy`, `action` or `allow`; this one begins with {}",
+                    self.peek().describe()
+                ),
                 self.peek_span(),
-            )
-            .note(
-                "a statement begins with `privacy:` (a declaration), `action:` (an action) \
-                 or `allow[` (a permission)",
+                "begin with `privacy:` to declare, `action:` to act, or `allow[` to permit",
             )),
         }
     }
@@ -149,28 +166,34 @@ impl<'a> Parser<'a> {
             "local" => Privacy::Local,
             "public" => Privacy::Public,
             _ => {
-                return Err(Diag::new(format!("`{}` is not a privacy", word), span)
-                    .note("privacy is `local` or `public`"))
+                return Err(Diag::new(
+                    format!("privacy is `local` or `public`; `{}` is neither", word),
+                    span,
+                    "write `local` to keep it to this file, or `public` to export it",
+                ))
             }
         };
 
         self.expect(Tok::Comma, "after the privacy")?;
         self.expect_word("memory", "as the second attribute of a declaration")
-            .map_err(|d| d.note(ORDER))?;
+            .map_err(|d| d.also(ORDER))?;
         self.expect(Tok::Colon, "after `memory`")?;
         let (word, span) = self.any_word("`static` or `automatic`")?;
         let memory = match word.as_str() {
             "static" => MemoryClass::Static,
             "automatic" => MemoryClass::Automatic,
             _ => {
-                return Err(Diag::new(format!("`{}` is not a memory class", word), span)
-                    .note("memory is `static` (one cell for the whole run) or `automatic` (a cell per block entry)"))
+                return Err(Diag::new(
+                    format!("memory is `static` or `automatic`; `{}` is neither", word),
+                    span,
+                    "write `static` for one cell for the whole run, or `automatic` for a cell per block entry",
+                ))
             }
         };
 
         self.expect(Tok::Comma, "after the memory class")?;
         self.expect_word("type", "as the third attribute of a declaration")
-            .map_err(|d| d.note(ORDER))?;
+            .map_err(|d| d.also(ORDER))?;
         self.expect(Tok::Colon, "after `type`")?;
         let (ty, ty_span) = self.type_descriptor()?;
 
@@ -214,7 +237,7 @@ impl<'a> Parser<'a> {
     /// `name.string.space.comma.emoji.end`
     fn name_descriptor(&mut self) -> Result<(Vec<CharClass>, Span), Diag> {
         let start = self.expect_word("name", "as the fourth attribute of a declaration")
-            .map_err(|d| d.note(ORDER))?;
+            .map_err(|d| d.also(ORDER))?;
         let mut classes = Vec::new();
         let mut span = start;
         loop {
@@ -225,20 +248,28 @@ impl<'a> Parser<'a> {
                 break;
             }
             let Some(class) = CharClass::from_word(&w) else {
-                return Err(Diag::new(format!("`{}` is not a character class", w), s).note(
-                    "the classes are string, digit, space, comma, period, hyphen, underscore, \
+                return Err(Diag::new(
+                    format!("a name descriptor permits character classes; `{}` is not one", w),
+                    s,
+                    "use one of string, digit, space, comma, period, hyphen, underscore, \
                      apostrophe, exclamation, question, colon, slash, emoji",
                 ));
             };
             if classes.contains(&class) {
-                return Err(Diag::new(format!("`{}` is permitted twice", w), s)
-                    .note("a descriptor is a set of permissions, so each class is listed once"));
+                return Err(Diag::new(
+                    format!("a descriptor is a set, so each class is permitted once; `{}` appears twice", w),
+                    s,
+                    format!("delete this second `.{}`", w),
+                ));
             }
             classes.push(class);
         }
         if classes.is_empty() {
-            return Err(Diag::new("this name descriptor permits no character classes", span)
-                .note("a name permitted nothing could not be written at all"));
+            return Err(Diag::new(
+                "a name descriptor permits at least one class, since a name permitted nothing could not be written",
+                span,
+                "permit what the name uses, for instance name.string.end",
+            ));
         }
         Ok((classes, span))
     }
@@ -260,8 +291,9 @@ impl<'a> Parser<'a> {
                     }
                     other => {
                         return Err(Diag::new(
-                            format!("a remark is a 'single quoted' value, found {}", other.describe()),
+                            format!("a remark is a single-quoted value; {} is here instead", other.describe()),
                             self.peek_span(),
+                            "put the remark in 'single quotes'",
                         ))
                     }
                 };
@@ -323,8 +355,11 @@ impl<'a> Parser<'a> {
                 Ok(Stmt::Repeat { cond, body, span: start.to(end) })
             }
 
-            other => Err(Diag::new(format!("`{}` is not an action Verb-AL knows", other), verb_span)
-                .note("the actions are note, say, assign, branch and repetition")),
+            other => Err(Diag::new(
+                format!("`{}` is not an action Verb-AL knows", other),
+                verb_span,
+                "use one of note, say, assign, branch or repetition",
+            )),
         }
     }
 
@@ -343,10 +378,13 @@ impl<'a> Parser<'a> {
             }
             if self.at_eof() {
                 return Err(Diag::new(
-                    format!("this block is never closed with `{}`", closer),
+                    format!(
+                        "every block closes with `{}`; the program ends while this one is still open",
+                        closer
+                    ),
                     opened_at,
-                )
-                .note("the program ends while it is still open"));
+                    format!("add `{}` where this block should end", closer),
+                ));
             }
             out.push(self.statement()?);
         }
@@ -384,11 +422,13 @@ impl<'a> Parser<'a> {
             return Ok(());
         }
         Err(Diag::new(
-            format!("`{}` is a second operator, and nothing here says which happens first", w),
+            format!(
+                "an expression holds at most one operator, because Verb-AL has no precedence table; `{}` is a second one",
+                w
+            ),
             self.peek_span(),
-        )
-        .note("Verb-AL has no precedence table, because a precedence table is a fact left implicit")
-        .note("parenthesise the part that happens first"))
+            "parenthesise the part that happens first, as in (a times b) plus c",
+        ))
     }
 
     fn primary(&mut self) -> Result<Expr, Diag> {
@@ -417,8 +457,12 @@ impl<'a> Parser<'a> {
                 })
             }
             other => Err(Diag::new(
-                format!("expected a name, a value or `(`, found {}", other.describe()),
+                format!(
+                    "an operand is a \"name\", a 'value' or a parenthesised expression; {} is none of these",
+                    other.describe()
+                ),
                 self.peek_span(),
+                "write a declared name, a literal value, or `(` to open a sub-expression",
             )),
         }
     }
@@ -436,8 +480,11 @@ fn build_type(
     match head {
         "integer" => {
             if words.len() != 3 {
-                return Err(Diag::new("an integer descriptor has three parts", span).note(
-                    "write integer.<n>-sign-bit(s).<m>-value-bit(s).twos-complement|unsigned-binary",
+                return Err(Diag::new(
+                    format!("an integer descriptor has three parts after `integer`; this has {}", words.len()),
+                    span,
+                    "write integer.<n>-sign-bit(s).<m>-value-bit(s).twos-complement, \
+                     for instance integer.1-sign-bit.31-value-bits.twos-complement",
                 ));
             }
             let signs = counted(&parts[0], "sign-bit")?;
@@ -447,8 +494,9 @@ fn build_type(
                 1 => true,
                 n => {
                     return Err(Diag::new(
-                        format!("a number has 0 or 1 sign bits, not {}", n),
+                        format!("a number carries 0 or 1 sign bits; this claims {}", n),
                         parts[0].1,
+                        "write `1-sign-bit` for a signed integer, or `0-sign-bits` for an unsigned one",
                     ))
                 }
             };
@@ -457,39 +505,45 @@ fn build_type(
                 (true, "twos-complement") | (false, "unsigned-binary") => {}
                 (true, other) => {
                     return Err(Diag::new(
-                        format!("a signed integer is encoded `twos-complement`, not `{}`", other),
+                        format!("an integer with a sign bit is encoded `twos-complement`; this says `{}`", other),
                         parts[2].1,
+                        "write `twos-complement`, or drop the sign bit and write `unsigned-binary`",
                     ))
                 }
                 (false, other) => {
                     return Err(Diag::new(
-                        format!("an unsigned integer is encoded `unsigned-binary`, not `{}`", other),
+                        format!("an integer with no sign bit is encoded `unsigned-binary`; this says `{}`", other),
                         parts[2].1,
+                        "write `unsigned-binary`, or add a sign bit and write `twos-complement`",
                     ))
                 }
             }
             let width = signs + values;
             if width == 0 || width > 64 {
                 return Err(Diag::new(
-                    format!("{} bits is not a width Verb-AL supports", width),
+                    format!("an integer is 1 to 64 bits wide, sign bit included; this asks for {}", width),
                     span,
-                )
-                .note("integers are 1 to 64 bits wide, sign bit included"));
+                    "reduce the value bits so the sign bit and value bits total 64 or fewer",
+                ));
             }
             Ok(Type::Int { width, signed })
         }
 
         "float" => {
             if words.len() != 3 {
-                return Err(Diag::new("a float descriptor has three parts", span).note(
-                    "write float.1-sign-bit.<e>-exponent-bits.<m>-explicit-mantissa-bits",
+                return Err(Diag::new(
+                    format!("a float descriptor has three parts after `float`; this has {}", words.len()),
+                    span,
+                    "write float.1-sign-bit.<e>-exponent-bits.<m>-explicit-mantissa-bits, \
+                     for instance float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits",
                 ));
             }
             let signs = counted(&parts[0], "sign-bit")?;
             if signs != 1 {
                 return Err(Diag::new(
-                    format!("every float has exactly one sign bit, not {}", signs),
+                    format!("every float carries exactly one sign bit; this claims {}", signs),
                     parts[0].1,
+                    "write `1-sign-bit`",
                 ));
             }
             let exponent = counted(&parts[1], "exponent-bit")?;
@@ -497,19 +551,23 @@ fn build_type(
             FloatKind::from_layout(exponent, mantissa).map(Type::Float).ok_or_else(|| {
                 Diag::new(
                     format!(
-                        "no float layout has {} exponent bits and {} explicit mantissa bits",
+                        "a float layout is one of four; none has {} exponent bits and {} explicit mantissa bits",
                         exponent, mantissa
                     ),
                     span,
+                    "use 5/10 (half), 8/7 (bfloat), 8/23 (single) or 11/52 (double) — \
+                     the mantissa count excludes the implicit leading one",
                 )
-                .note("the layouts are 5/10 (half), 8/7 (bfloat), 8/23 (single) and 11/52 (double)")
-                .note("the mantissa count excludes the implicit leading one")
             })
         }
 
         "truth" => {
             if words != ["1-bit"] {
-                return Err(Diag::new("a truth value is `truth.1-bit`", span));
+                return Err(Diag::new(
+                    "a truth descriptor is exactly `truth.1-bit`",
+                    span,
+                    "write truth.1-bit",
+                ));
             }
             Ok(Type::Truth)
         }
@@ -517,8 +575,9 @@ fn build_type(
         "character" => {
             if words != ["32-bits", "unicode-scalar"] {
                 return Err(Diag::new(
-                    "a character is `character.32-bits.unicode-scalar`",
+                    "a character descriptor is exactly `character.32-bits.unicode-scalar`",
                     span,
+                    "write character.32-bits.unicode-scalar",
                 ));
             }
             Ok(Type::Character)
@@ -526,13 +585,20 @@ fn build_type(
 
         "text" => {
             if words != ["utf-8", "pointer-and-length"] {
-                return Err(Diag::new("text is `text.utf-8.pointer-and-length`", span));
+                return Err(Diag::new(
+                    "a text descriptor is exactly `text.utf-8.pointer-and-length`",
+                    span,
+                    "write text.utf-8.pointer-and-length",
+                ));
             }
             Ok(Type::Text)
         }
 
-        other => Err(Diag::new(format!("`{}` is not a type Verb-AL knows", other), head_span)
-            .note("the types are integer, float, truth, character and text")),
+        other => Err(Diag::new(
+            format!("`{}` is not a type Verb-AL knows", other),
+            head_span,
+            "use one of integer, float, truth, character or text",
+        )),
     }
 }
 
@@ -540,10 +606,18 @@ fn build_type(
 fn counted(part: &(String, Span), noun: &str) -> Result<u32, Diag> {
     let (word, span) = part;
     let Some((digits, rest)) = word.split_once('-') else {
-        return Err(Diag::new(format!("expected a count of {}s here", noun), *span));
+        return Err(Diag::new(
+            format!("each part of this descriptor is a count followed by `{}`; this part has no count", noun),
+            *span,
+            format!("write a number, a hyphen and `{}`, as in `8-{}s`", noun, noun),
+        ));
     };
     let Ok(n) = digits.parse::<u32>() else {
-        return Err(Diag::new(format!("`{}` does not begin with a number", word), *span));
+        return Err(Diag::new(
+            format!("each part of this descriptor begins with a number; `{}` does not", word),
+            *span,
+            format!("write a number before the hyphen, as in `8-{}s`", noun),
+        ));
     };
     let expected_singular = n == 1;
     let (stem, plural) = match rest.strip_suffix('s') {
@@ -551,16 +625,20 @@ fn counted(part: &(String, Span), noun: &str) -> Result<u32, Diag> {
         None => (rest, false),
     };
     if stem != noun {
-        return Err(Diag::new(format!("expected {}s here, found `{}`", noun, rest), *span));
+        return Err(Diag::new(
+            format!("this part of the descriptor counts {}s; it says `{}` instead", noun, rest),
+            *span,
+            format!("write `{}-{}s`", n, noun),
+        ));
     }
     if plural == expected_singular {
         return Err(Diag::new(
             format!(
-                "write `{}`, not `{}` — Verb-AL insists the noun agrees with the number",
-                crate::types::plural(n, noun),
+                "Verb-AL insists the noun agrees with the number; `{}` does not",
                 word
             ),
             *span,
+            format!("write `{}`", crate::types::plural(n, noun)),
         ));
     }
     Ok(n)

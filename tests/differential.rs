@@ -138,8 +138,9 @@ fn silence_is_the_default() {
     let outcome = invoke(Command::new(EXE).arg("check").arg(&permitted));
     assert_eq!(outcome.code, 1);
     assert!(
-        outcome.stderr.contains("does not permit"),
-        "expected the diagnostic, got {:?}",
+        outcome.stderr.contains("rule broke & where:")
+            && outcome.stderr.contains("suggested fix:"),
+        "expected a full report, got {:?}",
         outcome.stderr
     );
 }
@@ -154,7 +155,46 @@ fn a_grant_covers_what_is_beneath_it() {
     )
     .unwrap();
     let outcome = invoke(Command::new(EXE).arg("check").arg(&program));
-    assert!(outcome.stderr.contains("does not permit"), "got {:?}", outcome.stderr);
+    assert!(outcome.stderr.contains("rule broke & where:"), "got {:?}", outcome.stderr);
+}
+
+/// Every report carries the whole template, and every one suggests a fix —
+/// a diagnostic that cannot say what to write instead is not finished.
+#[test]
+fn every_report_follows_the_template() {
+    for program in programs_in("tests/errors") {
+        let relative = program.strip_prefix(env!("CARGO_MANIFEST_DIR")).unwrap_or(&program);
+        let outcome = invoke(
+            Command::new(EXE)
+                .current_dir(env!("CARGO_MANIFEST_DIR"))
+                .arg("check")
+                .arg(relative),
+        );
+        let lines: Vec<&str> = outcome.stderr.lines().collect();
+        let where_ = program.display();
+        assert_eq!(lines.len(), 6, "{}: a report is six lines, got {:?}", where_, outcome.stderr);
+        assert!(lines[0].matches(':').count() >= 2, "{}: no location link", where_);
+        for (i, field) in
+            ["file: ", "line: ", "column: ", "rule broke & where: ", "suggested fix: "]
+                .iter()
+                .enumerate()
+        {
+            assert!(
+                lines[i + 1].starts_with(field),
+                "{}: line {} should begin {:?}, got {:?}",
+                where_,
+                i + 2,
+                field,
+                lines[i + 1]
+            );
+            assert!(
+                lines[i + 1].len() > field.len(),
+                "{}: the {:?} field is empty",
+                where_,
+                field
+            );
+        }
+    }
 }
 
 /// Diagnostics are part of the language, so they are recorded and compared.

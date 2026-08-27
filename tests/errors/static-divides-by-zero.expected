@@ -1,6 +1,6 @@
-error: a value was divided by zero
- --> tests/errors/static-divides-by-zero.val:3:118
-  |
-3 | privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "impossible" = '1' divided-by '0'end
-  |                                                                                                                      ^^^^^^^^^^^^^^^^^^
-  = a static initializer is worked out while the program is still being built
+tests/errors/static-divides-by-zero.val:3:118
+file: tests/errors/static-divides-by-zero.val
+line: 3
+column: 118
+rule broke & where: a static initializer is worked out while the program is still being built, and this one cannot be: a value was divided by zero
+suggested fix: give this static a value that can be worked out at build time

@@ -1,6 +1,6 @@
-error: `string` is permitted twice
- --> tests/errors/duplicate-class.val:3:67
-  |
-3 | privacy:local, memory:static, type:truth.1-bit, name.string.space.string.end: "a name" = 'true'end
-  |                                                                   ^^^^^^
-  = a descriptor is a set of permissions, so each class is listed once
+tests/errors/duplicate-class.val:3:67
+file: tests/errors/duplicate-class.val
+line: 3
+column: 67
+rule broke & where: a descriptor is a set, so each class is permitted once; `string` appears twice
+suggested fix: delete this second `.string`

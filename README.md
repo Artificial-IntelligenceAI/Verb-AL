@@ -102,28 +102,31 @@ still says so.
 
 ## Diagnostics
 
-The descriptors earn their keep by being checked:
+A report is six lines: a location your terminal will linkify, then the same
+facts labelled one per line.
 
 ```
-error: this name uses a class its descriptor does not permit
- --> tests/errors/forbidden-class.val:2:49
-  |
-2 | privacy:local, memory:static, type:truth.1-bit, name.string.digit.end: "well-formed" = 'true'end
-  |                                                 ^^^^^^^^^^^^^^^^^^^^^
-  = the descriptor permits: string.digit
-  = but "well-formed" contains `-`, which is hyphen
-  = write: name.string.digit.hyphen.end
+tests/errors/forbidden-class.val:4:49
+file: tests/errors/forbidden-class.val
+line: 4
+column: 49
+rule broke & where: a name uses only the classes its descriptor permits; this descriptor permits string.digit, but "well-formed" contains `-`, which is hyphen
+suggested fix: write name.string.digit.hyphen.end
 ```
 
-A descriptor is an allowance rather than an inventory: it may permit classes
-the name never uses, and the order it permits them in means nothing.
+`rule broke & where` names the rule and the place that broke it. `suggested
+fix` says what to write instead and is never empty — the diagnostic type cannot
+be constructed without one, which makes unhelpfulness a compile error in the
+compiler. Where a fix can be specific, it is:
 
-Diagnostics suggest rather than lecture where they can — a misspelled name is
-matched against what is in scope, and an unclosed block points at the line that
-opened it rather than at the end of the file.
+```
+rule broke & where: every name must be declared before it is used; "countor" never was
+suggested fix: write "counter", which is declared and in scope
+```
 
 Recorded transcripts of every diagnostic live in [`tests/errors`](tests/errors);
-re-record them with `VERBAL_BLESS=1 cargo test`.
+re-record them with `VERBAL_BLESS=1 cargo test`. A test walks all of them and
+insists on the full six lines.
 
 ## Not yet in the language
 

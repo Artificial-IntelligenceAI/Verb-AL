@@ -1,6 +1,6 @@
-error: a static initializer must be knowable before the program begins, so it cannot read a variable
- --> tests/errors/static-not-constant.val:4:112
-  |
-4 | privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "copy" = "source"end
-  |                                                                                                                ^^^^^^^^
-  = declare it `memory:automatic` if it must be worked out while running
+tests/errors/static-not-constant.val:4:112
+file: tests/errors/static-not-constant.val
+line: 4
+column: 112
+rule broke & where: a static cell is filled before the program begins, so its initializer cannot read a variable
+suggested fix: write `memory:automatic` if the value must be worked out while running

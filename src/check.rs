@@ -34,7 +34,11 @@ impl Checker {
     }
 
     fn unknown_name(&self, name: &str, span: Span) -> Diag {
-        let mut diag = Diag::new(format!("nothing named \"{}\" has been declared", name), span);
+        let mut diag = Diag::new(
+            format!("every name must be declared before it is used; \"{}\" never was", name),
+            span,
+            "declare it first, stating its privacy, memory, type and name descriptor",
+        );
         // A near miss is far more useful than a lecture, so lead with it.
         let nearest = self
             .scopes
@@ -44,9 +48,10 @@ impl Checker {
             .filter(|(d, _)| *d * 3 <= name.chars().count().max(1))
             .min_by_key(|(d, _)| *d);
         if let Some((_, declared)) = nearest {
-            diag = diag.note(format!("there is a name \"{}\" in scope — did you mean that?", declared));
+            // A near miss is worth more than the general advice, so it leads.
+            diag.fix = format!("write \"{}\", which is declared and in scope", declared);
         }
-        diag.note("declare it first, with its privacy, memory, type and name descriptor")
+        diag
     }
 
     fn block(&mut self, stmts: &[Stmt]) -> Result<Vec<TStmt>, Diag> {
@@ -76,13 +81,13 @@ impl Checker {
             Stmt::Allow { permission, permission_span, .. } => {
                 if !crate::permission::KNOWN.contains(&permission.as_str()) {
                     return Err(Diag::new(
-                        format!("`{}` is not something the compiler can be permitted", permission),
+                        format!(
+                            "a permission names something the compiler can be allowed to do; `{}` names nothing",
+                            permission
+                        ),
                         *permission_span,
-                    )
-                    .note(format!(
-                        "the permissions are: {}",
-                        crate::permission::KNOWN.join(", ")
-                    )));
+                        format!("use one of: {}", crate::permission::KNOWN.join(", ")),
+                    ));
                 }
                 Ok(None)
             }
@@ -123,10 +128,10 @@ impl Checker {
 
         if self.lookup(&d.name).is_some() {
             return Err(Diag::new(
-                format!("\"{}\" is already declared", d.name),
+                format!("one name stands for one thing; \"{}\" is already declared", d.name),
                 d.name_span,
-            )
-            .note("Verb-AL does not let one name stand for two things"));
+                "choose a different name, or delete the earlier declaration",
+            ));
         }
 
         let init = self.expr(&d.init, Some(d.ty))?;
@@ -164,14 +169,21 @@ impl Checker {
     /// it may permit more than the name happens to use.
     fn verify_name_descriptor(&self, d: &ast::Decl) -> Result<(), Diag> {
         if d.name.is_empty() {
-            return Err(Diag::new("a name cannot be empty", d.name_span));
+            return Err(Diag::new(
+                "every declaration names something; this name is empty",
+                d.name_span,
+                "put a name between the double quotes",
+            ));
         }
         let present = classes_of(&d.name).map_err(|c| {
             Diag::new(
-                format!("the character `{}` in this name belongs to no class Verb-AL knows", c),
+                format!(
+                    "every character in a name belongs to some class; `{}` belongs to none",
+                    c
+                ),
                 d.name_span,
+                format!("remove `{}` from the name", c),
             )
-            .note("a name may only contain characters some class covers")
         })?;
 
         let missing: Vec<_> =
@@ -187,15 +199,18 @@ impl Checker {
         let permitted: Vec<_> =
             d.name_classes.iter().copied().chain(missing.iter().copied()).collect();
 
-        Err(Diag::new("this name uses a class its descriptor does not permit", d.name_desc_span)
-            .note(format!("the descriptor permits: {}", describe_classes(&d.name_classes)))
-            .note(format!(
-                "but \"{}\" contains `{}`, which is {}",
+        Err(Diag::new(
+            format!(
+                "a name uses only the classes its descriptor permits; this descriptor permits {}, \
+                 but \"{}\" contains `{}`, which is {}",
+                describe_classes(&d.name_classes),
                 d.name,
                 offender,
                 first.word()
-            ))
-            .note(format!("write: name.{}.end", describe_classes(&permitted))))
+            ),
+            d.name_desc_span,
+            format!("write name.{}.end", describe_classes(&permitted)),
+        ))
     }
 
     // ---- expressions ------------------------------------------------------
@@ -245,15 +260,18 @@ impl Checker {
                 let want = expected.or_else(|| self.infer(operand));
                 let Some(want) = want else {
                     return Err(Diag::new(
-                        "nothing here says what kind of number to negate",
+                        "a literal takes its type from its surroundings, and nothing here says \
+                         what kind of number to negate",
                         *span,
-                    )
-                    .note("negate a declared name, or negate inside a declaration or assignment that fixes the type"));
+                        "negate a declared name, or negate inside a declaration or assignment \
+                         that fixes the type",
+                    ));
                 };
                 if !want.is_numeric() {
                     return Err(Diag::new(
-                        format!("`negated` needs a number, but this is {}", want.describe()),
+                        format!("`negated` applies to a number; this is {}", want.describe()),
                         *span,
+                        "negate a number, or use `not` if you meant a truth value",
                     ));
                 }
                 let operand = self.expr(operand, Some(want))?;
@@ -270,10 +288,14 @@ impl Checker {
                             Some(t) => t,
                             None => {
                                 return Err(Diag::new(
-                                    format!("nothing here says what kind of values `{}` is comparing", op.word()),
+                                    format!(
+                                        "a literal takes its type from its surroundings, and nothing here \
+                                         says what kind of values `{}` is comparing",
+                                        op.word()
+                                    ),
                                     *span,
-                                )
-                                .note("compare against a declared name, so the type is known"))
+                                    "compare against a declared name, whose type is known",
+                                ))
                             }
                         }
                     }
@@ -283,8 +305,14 @@ impl Checker {
                         Some(t) => t,
                         None => {
                             return Err(Diag::new(
-                                format!("nothing here says what kind of values `{}` is combining", op.word()),
+                                format!(
+                                    "a literal takes its type from its surroundings, and nothing here \
+                                     says what kind of values `{}` is combining",
+                                    op.word()
+                                ),
                                 *span,
+                                "combine with a declared name, or put the expression in a declaration \
+                                 or assignment that fixes the type",
                             ))
                         }
                     },
@@ -309,10 +337,15 @@ impl Checker {
         if let Some(want) = expected {
             if got.ty() != want {
                 return Err(Diag::new(
-                    format!("expected {}, found {}", want.describe(), got.ty().describe()),
+                    format!(
+                        "Verb-AL converts nothing on your behalf, so both sides must already agree; \
+                         this needs {} but is {}",
+                        want.describe(),
+                        got.ty().describe()
+                    ),
                     e.span(),
-                )
-                .note("Verb-AL converts nothing on your behalf"));
+                    format!("declare it as {}, or use a value that already is", want.describe()),
+                ));
             }
         }
         Ok(got)
@@ -334,6 +367,7 @@ impl Checker {
         Err(Diag::new(
             format!("`{}` does not apply to {}", op.word(), ty.describe()),
             span,
+            format!("use an operator that applies to {}", ty.describe()),
         ))
     }
 }
@@ -362,24 +396,34 @@ fn fold(e: &TExpr, whole: Span) -> Result<Value, Diag> {
     match e {
         TExpr::Const { value, .. } => Ok(value.clone()),
         TExpr::Read { .. } => Err(Diag::new(
-            "a static initializer must be knowable before the program begins, \
-             so it cannot read a variable",
+            "a static cell is filled before the program begins, so its initializer \
+             cannot read a variable",
             whole,
-        )
-        .note("declare it `memory:automatic` if it must be worked out while running")),
+            "write `memory:automatic` if the value must be worked out while running",
+        )),
         TExpr::Unary { op, ty, operand } => {
             let operand = fold(operand, whole)?;
-            value::unary(*op, *ty, &operand).map_err(|e| Diag::bare(e.fault.message().trim_end().to_string()))
+            value::unary(*op, *ty, &operand).map_err(|e| {
+                Diag::new(
+                    e.fault.message().trim_end().trim_start_matches("verb-al: ").to_string(),
+                    whole,
+                    "give this static a value that can be worked out at build time",
+                )
+            })
         }
         TExpr::Binary { op, operand_ty, lhs, rhs, span, .. } => {
             let lhs = fold(lhs, whole)?;
             let rhs = fold(rhs, whole)?;
             value::binary(*op, *operand_ty, &lhs, &rhs).map_err(|e| {
                 Diag::new(
-                    e.fault.message().trim_end().trim_start_matches("verb-al: ").to_string(),
+                    format!(
+                        "a static initializer is worked out while the program is still being built, \
+                         and this one cannot be: {}",
+                        e.fault.message().trim_end().trim_start_matches("verb-al: ")
+                    ),
                     *span,
+                    "give this static a value that can be worked out at build time",
                 )
-                .note("a static initializer is worked out while the program is still being built")
             })
         }
     }
@@ -390,8 +434,11 @@ pub fn parse_literal(raw: &str, ty: Type, span: Span) -> Result<Value, Diag> {
     match ty {
         Type::Int { width, signed } => {
             let n: i128 = raw.parse().map_err(|_| {
-                Diag::new(format!("'{}' is not a whole number", raw), span)
-                    .note("write digits, optionally preceded by a minus sign")
+                Diag::new(
+                    format!("an integer literal is digits with an optional minus sign; '{}' is not", raw),
+                    span,
+                    "write digits, optionally preceded by a minus sign",
+                )
             })?;
             let (lo, hi) = if signed {
                 (-(1i128 << (width - 1)), (1i128 << (width - 1)) - 1)
@@ -400,35 +447,53 @@ pub fn parse_literal(raw: &str, ty: Type, span: Span) -> Result<Value, Diag> {
             };
             if n < lo || n > hi {
                 return Err(Diag::new(
-                    format!("{} does not fit in {}", n, ty.describe()),
+                    format!(
+                        "a literal must fit the type it is stored in; {} does not fit {}, \
+                         which holds {} through {}",
+                        n,
+                        ty.describe(),
+                        lo,
+                        hi
+                    ),
                     span,
-                )
-                .note(format!("that type holds {} through {}", lo, hi)));
+                    format!("use a value between {} and {}, or widen the type", lo, hi),
+                ));
             }
             Ok(Value::Int(n))
         }
         Type::Float(kind) => {
             let v: f64 = raw.parse().map_err(|_| {
-                Diag::new(format!("'{}' is not a number", raw), span)
+                Diag::new(
+                    format!("a float literal is a decimal number; '{}' is not", raw),
+                    span,
+                    "write a number such as '1.5', '2e10', 'inf' or 'nan'",
+                )
             })?;
             Ok(Value::Float(kind.round(v)))
         }
         Type::Truth => match raw {
             "true" => Ok(Value::Truth(true)),
             "false" => Ok(Value::Truth(false)),
-            _ => Err(Diag::new(format!("'{}' is not a truth value", raw), span)
-                .note("a truth value is written 'true' or 'false'")),
+            _ => Err(Diag::new(
+                format!("a truth value is written 'true' or 'false'; '{}' is neither", raw),
+                span,
+                "write 'true' or 'false'",
+            )),
         },
         Type::Character => {
             let mut chars = raw.chars();
             match (chars.next(), chars.next()) {
                 (Some(c), None) => Ok(Value::Char(c)),
-                (None, _) => Err(Diag::new("a character literal holds no character", span)),
-                (Some(_), Some(_)) => Err(Diag::new(
-                    format!("'{}' holds more than one character", raw),
+                (None, _) => Err(Diag::new(
+                    "a character literal holds exactly one Unicode scalar; this one holds none",
                     span,
-                )
-                .note("a character is one Unicode scalar; use text for more")),
+                    "put a character between the quotes, or declare the name as text",
+                )),
+                (Some(_), Some(_)) => Err(Diag::new(
+                    format!("a character literal holds exactly one Unicode scalar; '{}' holds more", raw),
+                    span,
+                    "keep one character, or declare the name as text.utf-8.pointer-and-length",
+                )),
             }
         }
         Type::Text => Ok(Value::Text(raw.to_string())),

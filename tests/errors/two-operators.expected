@@ -1,7 +1,6 @@
-error: `times` is a second operator, and nothing here says which happens first
- --> tests/errors/two-operators.val:3:122
-  |
-3 | privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "n" = '1' plus '2' times '3'end
-  |                                                                                                                          ^^^^^
-  = Verb-AL has no precedence table, because a precedence table is a fact left implicit
-  = parenthesise the part that happens first
+tests/errors/two-operators.val:3:122
+file: tests/errors/two-operators.val
+line: 3
+column: 122
+rule broke & where: an expression holds at most one operator, because Verb-AL has no precedence table; `times` is a second one
+suggested fix: parenthesise the part that happens first, as in (a times b) plus c

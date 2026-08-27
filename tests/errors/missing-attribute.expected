@@ -1,6 +1,6 @@
-error: expected `memory` as the second attribute of a declaration, found `type`
- --> tests/errors/missing-attribute.val:3:16
-  |
-3 | privacy:local, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "n" = '1'end
-  |                ^^^^
-  = a declaration states, in this order: privacy, memory, type, name — and omits none of them
+tests/errors/missing-attribute.val:3:16
+file: tests/errors/missing-attribute.val
+line: 3
+column: 16
+rule broke & where: `memory` belongs as the second attribute of a declaration, but `type` is here instead
+suggested fix: write `memory` here; a declaration states privacy, memory, type and name in that order, omitting none

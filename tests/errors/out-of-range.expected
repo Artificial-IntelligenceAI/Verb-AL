@@ -1,6 +1,6 @@
-error: 256 does not fit in integer.0-sign-bits.8-value-bits.unsigned-binary
- --> tests/errors/out-of-range.val:3:112
-  |
-3 | privacy:local, memory:static, type:integer.0-sign-bits.8-value-bits.unsigned-binary, name.string.end: "byte" = '256'end
-  |                                                                                                                ^^^^^
-  = that type holds 0 through 255
+tests/errors/out-of-range.val:3:112
+file: tests/errors/out-of-range.val
+line: 3
+column: 112
+rule broke & where: a literal must fit the type it is stored in; 256 does not fit integer.0-sign-bits.8-value-bits.unsigned-binary, which holds 0 through 255
+suggested fix: use a value between 0 and 255, or widen the type

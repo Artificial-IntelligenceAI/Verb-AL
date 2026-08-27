@@ -1,6 +1,6 @@
-error: "flag" is already declared
- --> tests/errors/redeclared.val:4:66
-  |
-4 | privacy:local, memory:static, type:truth.1-bit, name.string.end: "flag" = 'false'end
-  |                                                                  ^^^^^^
-  = Verb-AL does not let one name stand for two things
+tests/errors/redeclared.val:4:66
+file: tests/errors/redeclared.val
+line: 4
+column: 66
+rule broke & where: one name stands for one thing; "flag" is already declared
+suggested fix: choose a different name, or delete the earlier declaration
