@@ -1,0 +1,6 @@
+tests/errors/newline-too-on-a-name.val:2:61
+file: tests/errors/newline-too-on-a-name.val
+line: 2
+column: 61
+rule broke & where: `newline-too` says something about a write, and a name is not written
+suggested fix: delete `.newline-too` — it belongs on a print descriptor

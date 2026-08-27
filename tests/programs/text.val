@@ -6,10 +6,15 @@ privacy:local, memory:automatic, type:text.utf-8.pointer-and-length, name.string
 privacy:local, memory:automatic, type:text.utf-8.pointer-and-length, name.string.end: "empty" = ''end
 
 action:assign, target:"greeting", value:"greeting" joined-with ', world'end
-standard-output:print.newline-too.end:[("greeting")]end
-standard-output:print.newline-too.end:[("greeting" equal-to 'hello, world')]end
-standard-output:print.newline-too.end:[("greeting" equal-to 'hello')]end
-standard-output:print.newline-too.end:[("greeting" not-equal-to 'hello')]end
-standard-output:print.newline-too.end:[("empty" joined-with "empty")]end
-standard-output:print.newline-too.end:[("empty" equal-to '')]end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:text.utf-8.pointer-and-length, name.string.end: "greeting" = 'hello'end)]end
+privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written one" = "greeting" equal-to 'hello, world'end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written one" = "greeting" equal-to 'hello, world'end)]end
+privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written two" = "greeting" equal-to 'hello'end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written two" = "greeting" equal-to 'hello'end)]end
+privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written three" = "greeting" not-equal-to 'hello'end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written three" = "greeting" not-equal-to 'hello'end)]end
+privacy:local, memory:automatic, type:text.utf-8.pointer-and-length, name.string.space.end: "written four" = "empty" joined-with "empty"end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:text.utf-8.pointer-and-length, name.string.space.end: "written four" = "empty" joined-with "empty"end)]end
+privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written five" = "empty" equal-to ''end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written five" = "empty" equal-to ''end)]end
 standard-output:print.string.newline.tab.newline-too.end:["lines\nand\ttabs"]end

@@ -250,11 +250,14 @@ impl<'a> Parser<'a> {
             if w == "end" {
                 break;
             }
-            if w == crate::types::NEWLINE_TOO {
+            if w == crate::types::VARIABLE || w == crate::types::NEWLINE_TOO {
                 return Err(Diag::new(
-                    "`newline-too` says what to write after the content, and a name is not written",
+                    format!(
+                        "`{}` says something about a write, and a name is not written",
+                        w
+                    ),
                     s,
-                    "delete `.newline-too` — it belongs on a print descriptor",
+                    format!("delete `.{}` — it belongs on a print descriptor", w),
                 ));
             }
             let Some(class) = CharClass::from_word(&w) else {
@@ -368,7 +371,7 @@ impl<'a> Parser<'a> {
     fn print(&mut self) -> Result<Stmt, Diag> {
         let start = self.expect_word("standard-output", "to begin a write")?;
         self.expect(Tok::Colon, "after `standard-output`")?;
-        let (classes, newline, classes_span) = self.print_descriptor()?;
+        let (classes, variable, newline, classes_span) = self.print_descriptor()?;
         self.expect(Tok::Colon, "after the print descriptor")?;
         self.expect(Tok::LBracket, "to open what is written")?;
 
@@ -378,8 +381,9 @@ impl<'a> Parser<'a> {
         if *self.peek() != Tok::RBracket {
             loop {
                 items.push(self.print_item()?);
-                if *self.peek() == Tok::Comma {
+                if self.peek_word() == Some("connect") {
                     self.bump();
+                    self.expect_word("with", "after `connect`")?;
                     continue;
                 }
                 break;
@@ -387,25 +391,37 @@ impl<'a> Parser<'a> {
         }
         self.expect(Tok::RBracket, "to close what is written")?;
         let end = self.expect_word("end", "to close the write")?;
-        Ok(Stmt::Print { classes, newline, classes_span, items, span: start.to(end) })
+        Ok(Stmt::Print { classes, newline, variable, classes_span, items, span: start.to(end) })
     }
 
     /// `print.string.space.newline-too.end` — like a name descriptor, but it
     /// may be empty, since a write need not contain any literal characters at
     /// all, and it may carry `newline-too`, which is not a class.
-    fn print_descriptor(&mut self) -> Result<(Vec<CharClass>, bool, Span), Diag> {
+    fn print_descriptor(&mut self) -> Result<(Vec<CharClass>, bool, bool, Span), Diag> {
         let start = self.expect_word("print", "to say what is being done to standard output")?;
         let mut classes = Vec::new();
         let mut newline = false;
+        let mut variable = false;
         let mut span = start;
         loop {
             self.expect(Tok::Dot, "in the print descriptor")?;
             let (w, s) = self.any_word(
-                "a character class, `newline-too`, or `end` to close the descriptor",
+                "a character class, `variable`, `newline-too`, or `end` to close the descriptor",
             )?;
             span = span.to(s);
             if w == "end" {
                 break;
+            }
+            if w == crate::types::VARIABLE {
+                if variable {
+                    return Err(Diag::new(
+                        "a descriptor is a set; `variable` appears twice",
+                        s,
+                        "delete this second `.variable` — one permits as many variables as the write names",
+                    ));
+                }
+                variable = true;
+                continue;
             }
             if w == crate::types::NEWLINE_TOO {
                 if newline {
@@ -421,12 +437,13 @@ impl<'a> Parser<'a> {
             let Some(class) = CharClass::from_word(&w) else {
                 return Err(Diag::new(
                     format!(
-                        "a print descriptor holds character classes and `newline-too`; \
-                         `{}` is neither",
+                        "a print descriptor holds character classes, `variable` and \
+                         `newline-too`; `{}` is none of them",
                         w
                     ),
                     s,
-                    "use `newline-too` to end the write with a newline, or one of string, digit, \
+                    "use `variable` to name one, `newline-too` to end with a newline, \
+                     or one of string, digit, \
                      space, comma, period, hyphen, underscore, apostrophe, exclamation, question, \
                      colon, slash, plus, newline, tab, carriage-return, emoji",
                 ));
@@ -443,7 +460,7 @@ impl<'a> Parser<'a> {
             }
             classes.push(class);
         }
-        Ok((classes, newline, span))
+        Ok((classes, variable, newline, span))
     }
 
     fn print_item(&mut self) -> Result<PrintItem, Diag> {
@@ -452,32 +469,32 @@ impl<'a> Parser<'a> {
                 let span = self.bump().span;
                 Ok(PrintItem::Literal { text, span })
             }
+            // A variable is named by restating its declaration in full.
             Tok::LParen => {
                 self.bump();
-                let expr = self.expression()?;
-                self.expect(Tok::RParen, "to close the parenthesised value")?;
-                Ok(PrintItem::Value(expr))
+                let Stmt::Decl(decl) = self.declaration()? else {
+                    unreachable!("declaration() returns a declaration")
+                };
+                self.expect(Tok::RParen, "to close the variable")?;
+                Ok(PrintItem::Variable(Box::new(decl)))
             }
             Tok::Lit(text) => Err(Diag::new(
                 format!(
-                    "what is written is either \"character content\" or a (parenthesised value); \
-                     '{}' is neither",
+                    "what is written is either \"character content\" or a variable, whose \
+                     declaration is restated in parentheses; '{}' is neither",
                     showable(&text)
                 ),
                 self.peek_span(),
-                format!(
-                    "write \"{}\" to print those characters, or parenthesise a value",
-                    showable(&text)
-                ),
+                format!("write \"{}\" to print those characters", showable(&text)),
             )),
             other => Err(Diag::new(
                 format!(
-                    "what is written is either \"character content\" or a (parenthesised value); \
-                     {} is neither",
+                    "what is written is either \"character content\" or a variable, whose \
+                     declaration is restated in parentheses; {} is neither",
                     other.describe()
                 ),
                 self.peek_span(),
-                "write the characters in double quotes, or parenthesise a value such as (\"count\")",
+                "write the characters in double quotes, or restate a declaration in parentheses",
             )),
         }
     }

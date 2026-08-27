@@ -9,9 +9,12 @@ privacy:local, memory:automatic, type:float.1-sign-bit.8-exponent-bits.23-explic
 action:assign, target:"small", value:"small" divided-by '3'end
 action:assign, target:"third", value:"third" divided-by '3'end
 
-standard-output:print.newline-too.end:[("small")]end
-standard-output:print.newline-too.end:[("third")]end
-standard-output:print.newline-too.end:[("nothing")]end
-standard-output:print.newline-too.end:[("nothing" equal-to "nothing")]end
-standard-output:print.newline-too.end:[("nothing" not-equal-to "nothing")]end
-standard-output:print.newline-too.end:[(negated "third")]end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:float.1-sign-bit.5-exponent-bits.10-explicit-mantissa-bits, name.string.end: "small" = '1'end)]end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits, name.string.end: "third" = '1'end)]end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:float.1-sign-bit.11-exponent-bits.52-explicit-mantissa-bits, name.string.end: "nothing" = 'nan'end)]end
+privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written one" = "nothing" equal-to "nothing"end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written one" = "nothing" equal-to "nothing"end)]end
+privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written two" = "nothing" not-equal-to "nothing"end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written two" = "nothing" not-equal-to "nothing"end)]end
+privacy:local, memory:automatic, type:float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits, name.string.space.end: "written three" = negated "third"end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits, name.string.space.end: "written three" = negated "third"end)]end

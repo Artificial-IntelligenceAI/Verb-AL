@@ -5,7 +5,11 @@ action:note, remark:'Signedness decides which comparison is emitted, so the same
 privacy:local, memory:automatic, type:integer.1-sign-bit.7-value-bits.twos-complement, name.string.end: "negative" = '-1'end
 privacy:local, memory:automatic, type:integer.0-sign-bits.8-value-bits.unsigned-binary, name.string.end: "large" = '255'end
 
-standard-output:print.newline-too.end:[("negative" less-than '0')]end
-standard-output:print.newline-too.end:[("large" greater-than '0')]end
-standard-output:print.newline-too.end:[("negative" at-most '-1')]end
-standard-output:print.newline-too.end:[(not ("large" equal-to '254'))]end
+privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written one" = "negative" less-than '0'end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written one" = "negative" less-than '0'end)]end
+privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written two" = "large" greater-than '0'end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written two" = "large" greater-than '0'end)]end
+privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written three" = "negative" at-most '-1'end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written three" = "negative" at-most '-1'end)]end
+privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written four" = not ("large" equal-to '254')end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written four" = not ("large" equal-to '254')end)]end

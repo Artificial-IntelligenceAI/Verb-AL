@@ -5,5 +5,6 @@ action:note, remark:'A fault stops the program in both backends, with the same w
 privacy:local, memory:automatic, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "zero" = '0'end
 
 standard-output:print.string.newline-too.end:["before"]end
-standard-output:print.newline-too.end:[('10' divided-by "zero")]end
+privacy:local, memory:automatic, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.space.end: "written one" = '10' divided-by "zero"end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.space.end: "written one" = '10' divided-by "zero"end)]end
 standard-output:print.string.newline-too.end:["after"]end

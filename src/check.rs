@@ -11,7 +11,12 @@ use crate::types::{classes_of, describe_classes, Type};
 use crate::value::{self, Value};
 
 pub fn check(stmts: &[Stmt]) -> Result<Program, Diag> {
-    let mut c = Checker { scopes: vec![HashMap::new()], statics: Vec::new(), autos: Vec::new() };
+    let mut c = Checker {
+        scopes: vec![HashMap::new()],
+        declarations: Vec::new(),
+        statics: Vec::new(),
+        autos: Vec::new(),
+    };
     let body = c.statements(stmts)?;
     Ok(Program { statics: c.statics, autos: c.autos, body })
 }
@@ -20,10 +25,16 @@ pub fn check(stmts: &[Stmt]) -> Result<Program, Diag> {
 struct Binding {
     place: Place,
     ty: Type,
+    /// The declaration that introduced this name. Held per binding rather than
+    /// per name: two sibling blocks may each declare "inner", and a restatement
+    /// must be checked against the one actually in scope.
+    declaration: usize,
 }
 
 struct Checker {
     scopes: Vec<HashMap<String, Binding>>,
+    /// Every declaration seen, indexed by the bindings that refer to them.
+    declarations: Vec<ast::Decl>,
     statics: Vec<StaticVar>,
     autos: Vec<AutoVar>,
 }
@@ -94,7 +105,7 @@ impl Checker {
 
             Stmt::Decl(d) => self.declaration(d),
 
-            Stmt::Print { classes, newline, classes_span, items, .. } => {
+            Stmt::Print { classes, newline, variable, classes_span, items, .. } => {
                 let mut parts = Vec::new();
                 for item in items {
                     match item {
@@ -105,6 +116,7 @@ impl Checker {
                                 text,
                                 *span,
                                 classes,
+                                *variable,
                                 *newline,
                                 *classes_span,
                             )?;
@@ -113,7 +125,20 @@ impl Checker {
                                 ty: Type::Text,
                             });
                         }
-                        ast::PrintItem::Value(expr) => parts.push(self.expr(expr, None)?),
+                        ast::PrintItem::Variable(decl) => {
+                            if !*variable {
+                                return Err(Diag::new(
+                                    "a write names a variable only when its descriptor \
+                                     permits one",
+                                    *classes_span,
+                                    format!(
+                                        "write {}",
+                                        crate::types::describe_print(classes, true, *newline)
+                                    ),
+                                ));
+                            }
+                            parts.push(self.restated(decl)?);
+                        }
                     }
                 }
                 Ok(Some(TStmt::Print { parts, newline: *newline }))
@@ -144,6 +169,8 @@ impl Checker {
 
     fn declaration(&mut self, d: &ast::Decl) -> Result<Option<TStmt>, Diag> {
         self.verify_name_descriptor(d)?;
+        let declaration = self.declarations.len();
+        self.declarations.push(d.clone());
 
         if self.lookup(&d.name).is_some() {
             return Err(Diag::new(
@@ -179,7 +206,7 @@ impl Checker {
         self.scopes
             .last_mut()
             .expect("there is always a scope")
-            .insert(d.name.clone(), Binding { place, ty: d.ty });
+            .insert(d.name.clone(), Binding { place, ty: d.ty, declaration });
         Ok(stmt)
     }
 
@@ -232,6 +259,45 @@ impl Checker {
         ))
     }
 
+    /// A variable is named by restating its declaration. The restatement is
+    /// checked against the declaration it claims to be: saying it again is only
+    /// worth requiring if saying it differently is caught.
+    fn restated(&self, decl: &ast::Decl) -> Result<TExpr, Diag> {
+        let Some(binding) = self.lookup(&decl.name) else {
+            return Err(self.unknown_name(&decl.name, decl.name_span));
+        };
+        let original = &self.declarations[binding.declaration];
+
+        let disagreement = if original.privacy != decl.privacy {
+            Some(("privacy", format!("{:?}", original.privacy).to_lowercase()))
+        } else if original.memory != decl.memory {
+            Some(("memory", format!("{:?}", original.memory).to_lowercase()))
+        } else if original.ty != decl.ty {
+            Some(("type", original.ty.describe()))
+        } else if !same_classes(&original.name_classes, &decl.name_classes) {
+            Some(("name descriptor", format!("name.{}.end", describe_classes(&original.name_classes))))
+        } else if !ast::same_expr(&original.init, &decl.init) {
+            Some(("initial value", "the value it was declared with".to_string()))
+        } else {
+            None
+        };
+
+        if let Some((attribute, expected)) = disagreement {
+            return Err(Diag::new(
+                format!(
+                    "naming a variable restates its declaration exactly; this restatement \
+                     of \"{}\" disagrees about its {}",
+                    showable(&decl.name),
+                    attribute
+                ),
+                decl.span,
+                format!("the declaration says {}", expected),
+            ));
+        }
+
+        Ok(TExpr::Read { place: binding.place, ty: binding.ty })
+    }
+
     /// Literal content written to standard output obeys the same rule a name
     /// does: it may draw only on the classes its descriptor permits.
     fn verify_print_descriptor(
@@ -239,6 +305,7 @@ impl Checker {
         text: &str,
         text_span: Span,
         permitted: &[crate::types::CharClass],
+        variable: bool,
         newline: bool,
         descriptor_span: Span,
     ) -> Result<(), Diag> {
@@ -272,7 +339,7 @@ impl Checker {
             descriptor_span,
             // Rebuild the whole descriptor, so applying the fix cannot silently
             // drop a `newline-too` the write already asked for.
-            format!("write {}", crate::types::describe_print(&all, newline)),
+            format!("write {}", crate::types::describe_print(&all, variable, newline)),
         ))
     }
 
@@ -433,6 +500,12 @@ impl Checker {
             format!("use an operator that applies to {}", ty.describe()),
         ))
     }
+}
+
+/// Two name descriptors permit the same thing when they permit the same set,
+/// whatever order each was written in.
+fn same_classes(a: &[crate::types::CharClass], b: &[crate::types::CharClass]) -> bool {
+    a.len() == b.len() && a.iter().all(|c| b.contains(c))
 }
 
 /// How many single-character edits turn one name into another. Used only to

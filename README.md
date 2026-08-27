@@ -28,6 +28,20 @@ Including the newline. A write ends with one only when it says `newline-too`,
 because an automatic newline would be a character in the output that nothing in
 the program accounts for.
 
+Naming a variable means restating its declaration, so that the point of use says
+again exactly what it uses — and the restatement is checked against the
+declaration it claims to be:
+
+```
+privacy:local, memory:static, type:float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits, name.string.space.comma.emoji.end: "Apples" = '200'end
+standard-output:print.string.space.emoji.comma.colon.variable.newline-too.end:["Apples present: " connect with (privacy:local, memory:static, type:float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits, name.string.space.comma.emoji.end: "Apples" = '200'end)]end
+```
+
+```
+rule broke & where: naming a variable restates its declaration exactly; this restatement of "Apples" disagrees about its type
+suggested fix: the declaration says float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits
+```
+
 [`SPEC.md`](SPEC.md) is the language definition.
 
 ## Two backends, one language
@@ -69,6 +83,7 @@ verbal check examples/fizzbuzz.val      # report errors and stop
 | File | Shows |
 |---|---|
 | [`hello-world.val`](examples/hello-world.val) | the first program |
+| [`apples.val`](examples/apples.val) | writing a literal and a variable together |
 | [`hello.val`](examples/hello.val) | the canonical declaration |
 | [`counting.val`](examples/counting.val) | repetition and assignment |
 | [`fizzbuzz.val`](examples/fizzbuzz.val) | nested branches, `remainder-of`, block scoping |

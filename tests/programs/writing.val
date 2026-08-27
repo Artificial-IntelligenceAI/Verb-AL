@@ -6,8 +6,8 @@ privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complem
 privacy:local, memory:static, type:text.utf-8.pointer-and-length, name.string.end: "who" = 'world'end
 
 standard-output:print.string.space.comma.exclamation.newline-too.end:["Hello, World!"]end
-standard-output:print.string.space.newline-too.end:["the answer is ", ("answer")]end
-standard-output:print.newline-too.end:[("answer")]end
-standard-output:print.string.space.newline-too.end:["hello ", ("who"), " and goodbye"]end
+standard-output:print.string.space.variable.newline-too.end:["the answer is " connect with (privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "answer" = '42'end)]end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "answer" = '42'end)]end
+standard-output:print.string.space.variable.newline-too.end:["hello " connect with (privacy:local, memory:static, type:text.utf-8.pointer-and-length, name.string.end: "who" = 'world'end) connect with " and goodbye"]end
 standard-output:print.string.newline.tab.newline-too.end:["over\ttwo\nlines"]end
 standard-output:print.emoji.space.newline-too.end:["🤣 🎉"]end

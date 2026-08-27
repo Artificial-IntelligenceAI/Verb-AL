@@ -1,0 +1,2 @@
+allow[compiler:error.error-message]end
+privacy:local, memory:static, type:truth.1-bit, name.string.newline-too.end: "ready" = 'true'end

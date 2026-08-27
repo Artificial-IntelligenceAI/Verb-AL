@@ -11,6 +11,6 @@ privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complem
 action:note, remark:'Permits exactly what it uses.'end
 privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.digit.end: "third3" = '9'end
 
-standard-output:print.newline-too.end:[("count")]end
-standard-output:print.newline-too.end:[("other count")]end
-standard-output:print.newline-too.end:[("third3")]end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.digit.space.hyphen.end: "count" = '7'end)]end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.hyphen.space.digit.string.end: "other count" = '8'end)]end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.digit.end: "third3" = '9'end)]end

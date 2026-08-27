@@ -7,8 +7,9 @@ privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string
 privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string.end: "three" = '\u{4E2D}'end
 privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string.end: "four" = '🤣'end
 
-standard-output:print.newline-too.end:[("one")]end
-standard-output:print.newline-too.end:[("two")]end
-standard-output:print.newline-too.end:[("three")]end
-standard-output:print.newline-too.end:[("four")]end
-standard-output:print.newline-too.end:[("one" less-than "four")]end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string.end: "one" = 'A'end)]end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string.end: "two" = '\u{00E9}'end)]end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string.end: "three" = '\u{4E2D}'end)]end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string.end: "four" = '🤣'end)]end
+privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written one" = "one" less-than "four"end
+standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written one" = "one" less-than "four"end)]end

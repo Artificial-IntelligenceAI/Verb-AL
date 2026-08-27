@@ -275,8 +275,11 @@ pub fn describe_classes(classes: &[CharClass]) -> String {
 
 /// A whole print descriptor, written the canonical way: the permitted classes
 /// in the order given, then `newline-too` if the write ends with one.
-pub fn describe_print(classes: &[CharClass], newline: bool) -> String {
+pub fn describe_print(classes: &[CharClass], variable: bool, newline: bool) -> String {
     let mut parts: Vec<&str> = classes.iter().map(|c| c.word()).collect();
+    if variable {
+        parts.push(VARIABLE);
+    }
     if newline {
         parts.push(NEWLINE_TOO);
     }
@@ -288,3 +291,7 @@ pub fn describe_print(classes: &[CharClass], newline: bool) -> String {
 /// newline. Distinct from the `newline` class, which permits a newline
 /// *within* what is written.
 pub const NEWLINE_TOO: &str = "newline-too";
+
+/// Not a character class either: a print descriptor writes this to permit the
+/// write to name a variable.
+pub const VARIABLE: &str = "variable";

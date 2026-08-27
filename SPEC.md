@@ -257,7 +257,9 @@ different things: the `newline` class permits a newline *within* what is
 written, while `newline-too` appends one *after* it. A name descriptor rejects
 `newline-too` outright, since a name is not written anywhere.
 
-It may appear anywhere in the chain, like a class, but never twice.
+It may appear anywhere in the chain, like a class, but never twice. Neither
+`newline-too` nor `variable` may appear in a *name* descriptor: both say
+something about a write, and a name is not written.
 
 Between the brackets, comma-separated, two kinds of thing:
 

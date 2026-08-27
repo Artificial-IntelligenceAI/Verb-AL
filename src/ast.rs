@@ -45,6 +45,9 @@ pub enum Stmt {
         /// Whether the descriptor said `newline-too`. A write ends with a
         /// newline only when it says so.
         newline: bool,
+        /// Whether the descriptor said `variable`, permitting the write to
+        /// name one.
+        variable: bool,
         classes_span: Span,
         items: Vec<PrintItem>,
         span: Span,
@@ -54,12 +57,33 @@ pub enum Stmt {
     Repeat { cond: Expr, body: Vec<Stmt>, span: Span },
 }
 
-/// One thing to be written. Literal character content is class-checked;
-/// a parenthesised expression is a value, printed as its type prints.
+/// One thing to be written, the parts joined by `connect with`.
+///
+/// Literal character content is class-checked. A variable is named by
+/// restating its declaration in full: at the point of use, the program says
+/// again exactly what it is using.
 #[derive(Clone, Debug)]
 pub enum PrintItem {
     Literal { text: String, span: Span },
-    Value(Expr),
+    Variable(Box<Decl>),
+}
+
+/// Whether two initializers are the same expression, disregarding where in the
+/// file each was written.
+pub fn same_expr(a: &Expr, b: &Expr) -> bool {
+    match (a, b) {
+        (Expr::Ident { name: x, .. }, Expr::Ident { name: y, .. }) => x == y,
+        (Expr::Lit { raw: x, .. }, Expr::Lit { raw: y, .. }) => x == y,
+        (
+            Expr::Unary { op: p, operand: x, .. },
+            Expr::Unary { op: q, operand: y, .. },
+        ) => p == q && same_expr(x, y),
+        (
+            Expr::Binary { op: p, lhs: xl, rhs: xr, .. },
+            Expr::Binary { op: q, lhs: yl, rhs: yr, .. },
+        ) => p == q && same_expr(xl, yl) && same_expr(xr, yr),
+        _ => false,
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
