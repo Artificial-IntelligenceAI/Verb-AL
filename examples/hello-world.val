@@ -1,4 +1,5 @@
 allow[compiler:error.error-message]end
+requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
 
 action:note, remark:'The first program, stating what it permits the compiler to say and which character classes it is about to write.'end
 

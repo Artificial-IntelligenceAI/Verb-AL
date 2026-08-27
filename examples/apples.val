@@ -1,4 +1,5 @@
 allow[compiler:error.error-message]end
+requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
 
 action:note, remark:'Naming a variable means restating its declaration in full. The write says which character classes its literal content draws on, that it names a variable, and that it ends in a newline.'end
 

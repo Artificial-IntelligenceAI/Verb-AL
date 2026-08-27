@@ -1,6 +1,6 @@
-tests/errors/missing-attribute.val:3:16
+tests/errors/missing-attribute.val:4:16
 file: tests/errors/missing-attribute.val
-line: 3
+line: 4
 column: 16
 rule broke & where: `memory` belongs as the second attribute of a declaration, but `type` is here instead
 suggested fix: write `memory` here; a declaration states privacy, memory, type and name in that order, omitting none

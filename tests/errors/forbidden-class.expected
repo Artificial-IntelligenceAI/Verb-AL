@@ -1,6 +1,6 @@
-tests/errors/forbidden-class.val:4:49
+tests/errors/forbidden-class.val:5:49
 file: tests/errors/forbidden-class.val
-line: 4
+line: 5
 column: 49
 rule broke & where: a name uses only the classes its descriptor permits; this descriptor permits string.digit, but "well-formed" contains `-`, which is hyphen
 suggested fix: write name.string.digit.hyphen.end

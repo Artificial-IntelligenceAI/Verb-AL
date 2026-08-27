@@ -1,4 +1,5 @@
 allow[compiler:error.error-message]end
+requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
 
 action:note, remark:'A block is a scope, so the same name may be declared again after it closes.'end
 

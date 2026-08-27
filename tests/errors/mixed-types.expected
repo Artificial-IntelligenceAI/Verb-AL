@@ -1,6 +1,6 @@
-tests/errors/mixed-types.val:5:141
+tests/errors/mixed-types.val:6:141
 file: tests/errors/mixed-types.val
-line: 5
+line: 6
 column: 141
 rule broke & where: Verb-AL converts nothing on your behalf, so both sides must already agree; this needs integer.1-sign-bit.31-value-bits.twos-complement but is float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits
 suggested fix: declare it as integer.1-sign-bit.31-value-bits.twos-complement, or use a value that already is

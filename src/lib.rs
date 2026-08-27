@@ -7,6 +7,7 @@ pub mod diag;
 pub mod fmt;
 pub mod interp;
 pub mod lexer;
+pub mod machine;
 pub mod parser;
 pub mod permission;
 pub mod tast;
@@ -28,7 +29,7 @@ pub struct Rejection {
 /// Before any of that, read the program's permissions: whether the compiler is
 /// allowed to explain itself is itself a fact the program must state, so it has
 /// to be known before the first thing that could go wrong.
-pub fn front_end(source: &Source) -> Result<Program, Rejection> {
+pub fn front_end(source: &Source, machine: &machine::Machine) -> Result<Program, Rejection> {
     let grants = permission::scan(&lexer::lex_lossy(&source.text));
     let may_speak = grants.allows(permission::ERROR_MESSAGE);
     let reject = |d: Diag| Rejection {
@@ -37,5 +38,5 @@ pub fn front_end(source: &Source) -> Result<Program, Rejection> {
 
     let tokens = lexer::lex(&source.text).map_err(reject)?;
     let stmts = parser::parse(&tokens).map_err(reject)?;
-    check::check(&stmts).map_err(reject)
+    check::check(&stmts, machine).map_err(reject)
 }

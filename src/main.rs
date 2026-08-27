@@ -42,7 +42,14 @@ fn main() -> ExitCode {
     };
     let source = Source::new(path.clone(), text);
 
-    let program = match verbal::front_end(&source) {
+    let machine = match verbal::machine::host() {
+        Ok(machine) => machine,
+        Err(why) => {
+            eprintln!("verb-al: {}", why);
+            return ExitCode::from(2);
+        }
+    };
+    let program = match verbal::front_end(&source, &machine) {
         Ok(p) => p,
         Err(rejection) => {
             // A program that did not permit error messages does not get one.

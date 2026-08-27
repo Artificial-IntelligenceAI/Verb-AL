@@ -1,6 +1,6 @@
-tests/errors/unknown-permission.val:2:7
+tests/errors/unknown-permission.val:3:7
 file: tests/errors/unknown-permission.val
-line: 2
+line: 3
 column: 7
 rule broke & where: a permission names something the compiler can be allowed to do; `compiler:error.telepathy` names nothing
 suggested fix: use one of: compiler:error, compiler:error.error-message

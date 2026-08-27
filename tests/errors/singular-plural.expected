@@ -1,6 +1,6 @@
-tests/errors/singular-plural.val:3:44
+tests/errors/singular-plural.val:4:44
 file: tests/errors/singular-plural.val
-line: 3
+line: 4
 column: 44
 rule broke & where: Verb-AL insists the noun agrees with the number; `1-sign-bits` does not
 suggested fix: write `1-sign-bit`

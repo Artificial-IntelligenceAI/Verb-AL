@@ -1,6 +1,6 @@
-tests/errors/print-single-quoted.val:2:47
+tests/errors/print-single-quoted.val:3:47
 file: tests/errors/print-single-quoted.val
-line: 2
+line: 3
 column: 47
 rule broke & where: what is written is either "character content" or a variable, whose declaration is restated in parentheses; 'Hello' is neither
 suggested fix: write "Hello" to print those characters

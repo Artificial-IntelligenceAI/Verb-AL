@@ -1,3 +1,4 @@
 allow[compiler:error.error-message]end
+requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
 action:note, remark:'The exclamation mark is a class of its own, and this descriptor does not permit it.'end
 standard-output:print.string.space.emoji.comma.newline-too.end:["Hello, World!"]end

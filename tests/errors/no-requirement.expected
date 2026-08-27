@@ -1,0 +1,6 @@
+tests/errors/no-requirement.val:1:1
+file: tests/errors/no-requirement.val
+line: 1
+column: 1
+rule broke & where: every program states what it requires of the machine it is built for; this one states nothing
+suggested fix: add requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end — which is what this machine is

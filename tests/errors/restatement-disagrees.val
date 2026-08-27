@@ -1,4 +1,5 @@
 allow[compiler:error.error-message]end
+requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
 action:note, remark:'The restatement claims a double, but the declaration made a single.'end
 privacy:local, memory:static, type:float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits, name.string.end: "apples" = '200'end
 standard-output:print.variable.newline-too.end:[(privacy:local, memory:static, type:float.1-sign-bit.11-exponent-bits.52-explicit-mantissa-bits, name.string.end: "apples" = '200'end)]end

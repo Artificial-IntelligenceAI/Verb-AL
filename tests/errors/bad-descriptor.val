@@ -1,3 +1,4 @@
 allow[compiler:error.error-message]end
+requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
 
 privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.end: "two words" = '1'end

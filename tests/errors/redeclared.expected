@@ -1,6 +1,6 @@
-tests/errors/redeclared.val:4:66
+tests/errors/redeclared.val:5:66
 file: tests/errors/redeclared.val
-line: 4
+line: 5
 column: 66
 rule broke & where: one name stands for one thing; "flag" is already declared
 suggested fix: choose a different name, or delete the earlier declaration

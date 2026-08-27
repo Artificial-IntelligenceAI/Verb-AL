@@ -1,6 +1,6 @@
-tests/errors/static-not-constant.val:4:112
+tests/errors/static-not-constant.val:5:112
 file: tests/errors/static-not-constant.val
-line: 4
+line: 5
 column: 112
 rule broke & where: a static cell is filled before the program begins, so its initializer cannot read a variable
 suggested fix: write `memory:automatic` if the value must be worked out while running

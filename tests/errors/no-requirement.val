@@ -1,0 +1,2 @@
+allow[compiler:error.error-message]end
+action:note, remark:'This program never says what machine it is for.'end

@@ -1,6 +1,6 @@
-tests/errors/two-operators.val:3:122
+tests/errors/two-operators.val:4:122
 file: tests/errors/two-operators.val
-line: 3
+line: 4
 column: 122
 rule broke & where: an expression holds at most one operator, because Verb-AL has no precedence table; `times` is a second one
 suggested fix: parenthesise the part that happens first, as in (a times b) plus c

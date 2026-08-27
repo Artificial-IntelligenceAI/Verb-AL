@@ -1,4 +1,5 @@
 allow[compiler:error.error-message]end
+requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
 
 action:note, remark:'A name descriptor is an allowance, not an inventory: it may permit classes the name never uses, and the order it permits them in means nothing.'end
 

@@ -104,6 +104,19 @@ verbal check examples/fizzbuzz.val      # report errors and stop
 Four different numbers, because they are four different layouts, and Verb-AL
 prints each at the shortest precision that round-trips it.
 
+## The machine is not assumed either
+
+Every program states, once, what it needs of the machine it is built for — and
+the claim is checked against what LLVM says the machine is:
+
+```
+requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
+```
+
+Only the three properties the source can actually depend on. A CPU model or an
+optimisation level changes nothing a program is allowed to claim, so it is no
+business of the program's.
+
 ## The compiler asks permission
 
 Nothing is implicit — including whether the compiler may talk to you. A program

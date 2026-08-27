@@ -245,7 +245,7 @@ pub fn lex_lossy(text: &str) -> Vec<Token> {
                 return out;
             }
             Err(diag) => {
-                let Some(span) = diag.span else { return out };
+                let span = diag.span;
                 // The span is relative to the slice that was lexed, not to the
                 // whole text, so it must be rebased before it can index it.
                 let partial = lex(&text[from..from + span.start]).unwrap_or_default();

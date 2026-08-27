@@ -122,17 +122,58 @@ impl<'a> Parser<'a> {
             Some("action") => self.action(),
             Some("allow") => self.permission(),
             Some("standard-output") => self.print(),
+            Some("requires") => self.requires(),
             _ => Err(Diag::new(
                 format!(
-                    "every statement begins with `privacy`, `action`, `allow` or `standard-output`; \
-                     this one begins with {}",
+                    "every statement begins with `privacy`, `action`, `allow`, `standard-output` \
+                     or `requires`; this one begins with {}",
                     self.peek().describe()
                 ),
                 self.peek_span(),
                 "begin with `privacy:` to declare, `action:` to act, `allow[` to permit, \
-                 or `standard-output:` to write",
+                 `standard-output:` to write, or `requires:` to say what the machine must be",
             )),
         }
+    }
+
+    /// `requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignmentend`
+    ///
+    /// `end` is separated by a space, unlike every other statement: it is the
+    /// only terminator that would otherwise abut a bare word, and
+    /// `8-byte-maximum-alignmentend` is one word to any lexer.
+    ///
+    /// No plural agreement applies here, unlike §3.3: `64-bit` and `8-byte`
+    /// are compound adjectives, not counts of a noun. The number describes the
+    /// pointer, it does not count pointers.
+    fn requires(&mut self) -> Result<Stmt, Diag> {
+        let start = self.expect_word("requires", "to begin a requirement")?;
+        self.expect(Tok::Colon, "after `requires`")?;
+        self.expect_word("target", "as the thing being required of")?;
+
+        self.expect(Tok::Dot, "in the requirement")?;
+        let (word, span) = self.any_word("the pointer width, such as `64-bit-pointers`")?;
+        let pointer_bits = adjectival(&word, span, "bit-pointers", "64")?;
+
+        self.expect(Tok::Dot, "in the requirement")?;
+        let (word, span) = self.any_word("`little-endian` or `big-endian`")?;
+        let little_endian = match word.as_str() {
+            "little-endian" => true,
+            "big-endian" => false,
+            other => {
+                return Err(Diag::new(
+                    format!("a machine is `little-endian` or `big-endian`; `{}` is neither", other),
+                    span,
+                    "write `little-endian`, which is what nearly every machine now is",
+                ))
+            }
+        };
+
+        self.expect(Tok::Dot, "in the requirement")?;
+        let (word, span) = self.any_word("the alignment, such as `8-byte-maximum-alignment`")?;
+        let max_alignment = adjectival(&word, span, "byte-maximum-alignment", "8")?;
+
+        let end = self.expect_word("end", "to close the requirement")?;
+        Ok(Stmt::Requires { pointer_bits, little_endian, max_alignment, span: start.to(end) })
     }
 
     /// `allow[compiler:error.error-message]end`
@@ -736,6 +777,26 @@ fn build_type(
             "use one of integer, float, truth, character or text",
         )),
     }
+}
+
+/// Reads a compound adjective like `64-bit-pointers`, where the number
+/// describes the noun rather than counting it, so no agreement applies.
+fn adjectival(word: &str, span: Span, tail: &str, example: &str) -> Result<u32, Diag> {
+    let expected = format!("<number>-{}", tail);
+    let Some(digits) = word.strip_suffix(tail).and_then(|d| d.strip_suffix('-')) else {
+        return Err(Diag::new(
+            format!("this part of the requirement is written `{}`; it says `{}`", expected, word),
+            span,
+            format!("write `{}-{}`", example, tail),
+        ));
+    };
+    digits.parse().map_err(|_| {
+        Diag::new(
+            format!("`{}` does not begin with a number", word),
+            span,
+            format!("write `{}-{}`", example, tail),
+        )
+    })
 }
 
 /// Reads a part like `31-value-bits`, insisting the noun agrees in number.

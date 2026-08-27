@@ -1,4 +1,5 @@
 allow[compiler:error.error-message]end
+requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
 
 action:note, remark:'The canonical Verb-AL declaration. Java would leave the bit layout, the storage class and the identifier alphabet to its specification. Verb-AL says all three out loud.'end
 

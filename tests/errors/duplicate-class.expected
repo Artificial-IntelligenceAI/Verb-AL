@@ -1,6 +1,6 @@
-tests/errors/duplicate-class.val:3:67
+tests/errors/duplicate-class.val:4:67
 file: tests/errors/duplicate-class.val
-line: 3
+line: 4
 column: 67
 rule broke & where: a descriptor is a set, so each class is permitted once; `string` appears twice
 suggested fix: delete this second `.string`

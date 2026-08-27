@@ -35,8 +35,8 @@ statement := attribute ("," attribute)* terminator
 attribute := key [descriptor] ":" value
 ```
 
-There are four kinds: declarations (§3), actions (§4), writes (§5) and
-permissions (§6).
+There are five kinds: declarations (§3), actions (§4), writes (§5),
+requirements (§6) and permissions (§7).
 
 Two kinds of dotted **descriptor** appear, and the difference is deliberate:
 
@@ -296,7 +296,7 @@ Name descriptors are compared as sets, since order in a descriptor carries no
 meaning. The variable found is the one in scope at the write, so two sibling
 blocks may each declare `"inner"` and each restate their own.
 
-What a variable prints is fixed by its type (§8), not by the program text, so
+What a variable prints is fixed by its type (§9), not by the program text, so
 the character classes say nothing about it. `print.variable.newline-too.end`
 permits no classes at all and is correct for a write with no literal content.
 
@@ -306,7 +306,38 @@ A computed value is not a variable. To write one, declare a variable for it:
 privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "is large" = ("size" greater-than '0')end
 ```
 
-## 6. Permissions
+## 6. Requirements
+
+```
+requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
+```
+
+Every program states, exactly once, what it requires of the machine it is built
+for. This is not optional: a program that declined to say would leave the
+compiler free to build for whatever machine it happened to be running on, and
+the machine was the last fact in Verb-AL left to whoever ran the compiler.
+
+Only three properties may be required, because only three affect anything the
+source can say: how wide a pointer is, which end of a number comes first, and
+how strictly a value must be aligned. A CPU model, an instruction-set extension,
+a relocation mode and an optimisation level change nothing a program is allowed
+to claim, so they are no business of the program's. They belong to the build.
+
+The claim is **checked** against the machine, which LLVM is asked about rather
+than a table being consulted. A program requiring 32 bits on a 64-bit machine
+does not compile, and the report says what the machine actually is.
+
+Note two departures from §3.3, both deliberate:
+
+- **No plural agreement.** `64-bit-pointers` and `8-byte-maximum-alignment` are
+  compound adjectives; the number describes the noun rather than counting it.
+  §3.3's `31-value-bits` counts bits, so it agrees; `8-byte` does not count
+  bytes, so it does not.
+- **The terminator is preceded by a space.** This is the only statement whose
+  `end` would otherwise abut a bare word, and `…alignmentend` is one word to any
+  lexer. Everywhere else `end` follows a quote or a bracket and needs no space.
+
+## 7. Permissions
 
 The compiler does not assume it may speak. A program that has not permitted
 error messages does not receive error messages: it fails, with a status and
@@ -335,7 +366,7 @@ applies to the whole of it.
 Runtime faults are not covered. `compiler:` grants concern the compiler, and a
 program that divides by zero while running still says so.
 
-### 6.1 The shape of a report
+### 7.1 The shape of a report
 
 A permitted diagnostic is six lines: a location a terminal will turn into a
 link, then the same facts spelled out and labelled, because a report that made
@@ -359,7 +390,7 @@ recorded diagnostic and insists on all six lines.
 
 Compilation stops at the first broken rule, so a report describes one.
 
-## 7. Expressions
+## 8. Expressions
 
 ```
 expr    := primary | unary primary | primary binary primary
@@ -390,7 +421,7 @@ fact left implicit, and this language does not leave facts implicit:
 There is **no implicit conversion of any kind**. An integer and a float may not
 meet in the same operator.
 
-## 8. Runtime semantics
+## 9. Runtime semantics
 
 **Integer arithmetic wraps** at the declared width, signed and unsigned alike;
 there is no undefined behaviour. LLVM `add`/`sub`/`mul` are emitted without
@@ -420,7 +451,7 @@ under `verbal.<index>.<ascii echo of the name>`. This matters only to
 `privacy:public`, whose exported symbol is that mangled form rather than the
 name as written.
 
-## 9. Deliberately absent from version 1
+## 10. Deliberately absent from version 1
 
 Functions — the user has not yet decided their syntax, and guessing would be
 worse than waiting. Also absent: aggregates (lists, records), imports, explicit

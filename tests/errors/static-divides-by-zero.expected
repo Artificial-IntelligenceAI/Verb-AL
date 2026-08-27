@@ -1,6 +1,6 @@
-tests/errors/static-divides-by-zero.val:3:118
+tests/errors/static-divides-by-zero.val:4:118
 file: tests/errors/static-divides-by-zero.val
-line: 3
+line: 4
 column: 118
 rule broke & where: a static initializer is worked out while the program is still being built, and this one cannot be: a value was divided by zero
 suggested fix: give this static a value that can be worked out at build time

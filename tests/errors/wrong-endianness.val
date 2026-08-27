@@ -1,0 +1,2 @@
+allow[compiler:error.error-message]end
+requires:target.64-bit-pointers.big-endian.8-byte-maximum-alignment end

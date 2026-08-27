@@ -1,6 +1,6 @@
-tests/errors/bad-descriptor.val:3:86
+tests/errors/bad-descriptor.val:4:86
 file: tests/errors/bad-descriptor.val
-line: 3
+line: 4
 column: 86
 rule broke & where: a name uses only the classes its descriptor permits; this descriptor permits string, but "two words" contains ` `, which is space
 suggested fix: write name.string.space.end

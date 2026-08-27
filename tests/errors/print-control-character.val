@@ -1,3 +1,4 @@
 allow[compiler:error.error-message]end
+requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
 action:note, remark:'A newline in the written run, with a descriptor that does not permit it — the report must stay six lines.'end
 standard-output:print.string.newline-too.end:["over\ntwo lines"]end

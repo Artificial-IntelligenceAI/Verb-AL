@@ -1,4 +1,5 @@
 allow[compiler:error.error-message]end
+requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
 
 privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written one" = "never declared"end
 standard-output:print.variable.newline-too.end:[(privacy:local, memory:automatic, type:truth.1-bit, name.string.space.end: "written one" = "never declared"end)]end

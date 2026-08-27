@@ -8,6 +8,16 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+/// What this machine is. Verb-AL programs must say what they need of their
+/// machine, so the fixtures these tests write have to say it too — which makes
+/// the suite, like the corpus, specific to a 64-bit little-endian host.
+const REQUIREMENT: &str =
+    "requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end";
+const PREAMBLE: &str = concat!(
+    "allow[compiler:error.error-message]end\n",
+    "requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end"
+);
+
 const EXE: &str = env!("CARGO_BIN_EXE_verbal");
 
 struct Outcome {
@@ -120,7 +130,7 @@ fn silence_is_the_default() {
     let program = std::env::temp_dir().join("verbal-unpermitted.val");
     std::fs::write(
         &program,
-        "privacy:local, memory:static, type:truth.1-bit, name.string.end: \"well-formed\" = 'true'end\n",
+        &format!("{}\nprivacy:local, memory:static, type:truth.1-bit, name.string.end: \"well-formed\" = 'true'end\n", REQUIREMENT),
     )
     .unwrap();
     let outcome = invoke(Command::new(EXE).arg("check").arg(&program));
@@ -151,7 +161,7 @@ fn a_grant_covers_what_is_beneath_it() {
     let program = std::env::temp_dir().join("verbal-branch-grant.val");
     std::fs::write(
         &program,
-        "allow[compiler:error]end\nprivacy:local, memory:static, type:truth.1-bit, name.string.end: \"well-formed\" = 'true'end\n",
+        &format!("allow[compiler:error]end\n{}\nprivacy:local, memory:static, type:truth.1-bit, name.string.end: \"well-formed\" = 'true'end\n", REQUIREMENT),
     )
     .unwrap();
     let outcome = invoke(Command::new(EXE).arg("check").arg(&program));
@@ -255,7 +265,7 @@ fn a_write_names_a_variable_and_nothing_else() {
     ];
     for (source, should_compile) in cases {
         let program = std::env::temp_dir().join("verbal-write-shape.val");
-        std::fs::write(&program, format!("allow[compiler:error.error-message]end\n{}\n", source))
+        std::fs::write(&program, format!("{}\n{}\n", PREAMBLE, source))
             .unwrap();
         let outcome = invoke(Command::new(EXE).arg("check").arg(&program));
         assert_eq!(
@@ -274,7 +284,7 @@ fn a_write_names_a_variable_and_nothing_else() {
 #[test]
 fn unlexable_text_is_reported_not_fatal() {
     let program = std::env::temp_dir().join("verbal-unlexable.val");
-    std::fs::write(&program, "allow[compiler:error.error-message]end\nprivacy:<a>, memory:<b>end\n")
+    std::fs::write(&program, &format!("{}\nprivacy:<a>, memory:<b>end\n", PREAMBLE))
         .unwrap();
     let outcome = invoke(Command::new(EXE).arg("check").arg(&program));
     assert_eq!(outcome.code, 1, "it should fail");
@@ -305,7 +315,7 @@ fn the_documentation_still_speaks_verbal() {
                 continue;
             }
             let program = root.join("target").join("doc-line.val");
-            std::fs::write(&program, format!("allow[compiler:error.error-message]end\n{}\n", line))
+            std::fs::write(&program, format!("{}\n{}\n", PREAMBLE, line))
                 .unwrap();
             let outcome = invoke(Command::new(EXE).arg("check").arg(&program));
             // A statement quoted on its own may name something the surrounding

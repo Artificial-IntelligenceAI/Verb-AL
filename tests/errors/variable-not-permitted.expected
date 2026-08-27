@@ -1,6 +1,6 @@
-tests/errors/variable-not-permitted.val:4:17
+tests/errors/variable-not-permitted.val:5:17
 file: tests/errors/variable-not-permitted.val
-line: 4
+line: 5
 column: 17
 rule broke & where: a write names a variable only when its descriptor permits one
 suggested fix: write print.variable.newline-too.end

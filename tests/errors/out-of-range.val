@@ -1,3 +1,4 @@
 allow[compiler:error.error-message]end
+requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
 
 privacy:local, memory:static, type:integer.0-sign-bits.8-value-bits.unsigned-binary, name.string.end: "byte" = '256'end

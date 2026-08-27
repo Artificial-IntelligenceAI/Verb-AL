@@ -1,6 +1,6 @@
-tests/errors/print-control-character.val:3:17
+tests/errors/print-control-character.val:4:17
 file: tests/errors/print-control-character.val
-line: 3
+line: 4
 column: 17
 rule broke & where: what is written uses only the classes its descriptor permits; this descriptor permits string, but "over\ntwo lines" contains `\n`, which is newline
 suggested fix: write print.string.newline.space.newline-too.end

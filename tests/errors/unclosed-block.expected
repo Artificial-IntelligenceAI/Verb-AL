@@ -1,6 +1,6 @@
-tests/errors/unclosed-block.val:4:1
+tests/errors/unclosed-block.val:5:1
 file: tests/errors/unclosed-block.val
-line: 4
+line: 5
 column: 1
 rule broke & where: every block closes with `end-branch`; the program ends while this one is still open
 suggested fix: add `end-branch` where this block should end

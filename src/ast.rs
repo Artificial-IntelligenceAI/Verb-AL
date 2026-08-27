@@ -32,6 +32,18 @@ pub struct Decl {
 #[derive(Clone, Debug)]
 pub enum Stmt {
     Decl(Decl),
+    /// `requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignmentend`
+    ///
+    /// What the program needs of the machine it is built for. Only what the
+    /// source can actually depend on: the CPU and its features change nothing
+    /// a program is allowed to claim, so they belong to the build, not here.
+    Requires {
+        pointer_bits: u32,
+        little_endian: bool,
+        max_alignment: u32,
+        span: Span,
+    },
+
     /// `allow[compiler:error.error-message]end` — what the program permits the
     /// compiler to do. Compile-time only; it runs no code.
     Allow { permission: String, permission_span: Span, span: Span },

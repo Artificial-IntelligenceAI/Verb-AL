@@ -22,12 +22,15 @@ impl Span {
 pub struct Diag {
     pub rule: String,
     pub fix: String,
-    pub span: Option<Span>,
+    /// Every report names a place. A rule about the whole program is broken at
+    /// its beginning, so that even the absence of a statement has a location
+    /// and the report keeps its one shape.
+    pub span: Span,
 }
 
 impl Diag {
     pub fn new(rule: impl Into<String>, span: Span, fix: impl Into<String>) -> Self {
-        Diag { rule: rule.into(), fix: fix.into(), span: Some(span) }
+        Diag { rule: rule.into(), fix: fix.into(), span }
     }
 
     /// Add a further clause to the suggested fix.
@@ -36,10 +39,6 @@ impl Diag {
         self
     }
 
-    /// For the rare fault that belongs to no particular stretch of text.
-    pub fn unplaced(rule: impl Into<String>, fix: impl Into<String>) -> Self {
-        Diag { rule: rule.into(), fix: fix.into(), span: None }
-    }
 }
 
 /// Text from the program, made safe to quote inside a report: a report is six
@@ -83,22 +82,12 @@ impl Source {
     /// facts spelled out one per line, because Verb-AL leaves nothing implicit
     /// and that includes what a diagnostic is telling you.
     pub fn render(&self, d: &Diag) -> String {
+        let (line, column) = self.line_col(d.span.start);
         let mut out = String::new();
-        match d.span {
-            Some(span) => {
-                let (line, column) = self.line_col(span.start);
-                out.push_str(&format!("{}:{}:{}\n", self.path, line, column));
-                out.push_str(&format!("file: {}\n", self.path));
-                out.push_str(&format!("line: {}\n", line));
-                out.push_str(&format!("column: {}\n", column));
-            }
-            None => {
-                out.push_str(&format!("{}\n", self.path));
-                out.push_str(&format!("file: {}\n", self.path));
-                out.push_str("line: (the whole file)\n");
-                out.push_str("column: (the whole file)\n");
-            }
-        }
+        out.push_str(&format!("{}:{}:{}\n", self.path, line, column));
+        out.push_str(&format!("file: {}\n", self.path));
+        out.push_str(&format!("line: {}\n", line));
+        out.push_str(&format!("column: {}\n", column));
         out.push_str(&format!("rule broke & where: {}\n", d.rule));
         out.push_str(&format!("suggested fix: {}\n", d.fix));
         out

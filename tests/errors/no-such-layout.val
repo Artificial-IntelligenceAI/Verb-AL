@@ -1,3 +1,4 @@
 allow[compiler:error.error-message]end
+requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
 
 privacy:local, memory:static, type:float.1-sign-bit.9-exponent-bits.22-explicit-mantissa-bits, name.string.end: "odd" = '1'end

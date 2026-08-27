@@ -10,14 +10,26 @@ use crate::tast::*;
 use crate::types::{classes_of, describe_classes, Type};
 use crate::value::{self, Value};
 
-pub fn check(stmts: &[Stmt]) -> Result<Program, Diag> {
+pub fn check(stmts: &[Stmt], machine: &crate::machine::Machine) -> Result<Program, Diag> {
     let mut c = Checker {
         scopes: vec![HashMap::new()],
         declarations: Vec::new(),
         statics: Vec::new(),
         autos: Vec::new(),
+        machine,
+        required: false,
     };
     let body = c.statements(stmts)?;
+    if !c.required {
+        // The machine is the last thing a Verb-AL program was allowed to leave
+        // to whoever happened to be compiling it.
+        return Err(Diag::new(
+            "every program states what it requires of the machine it is built for; \
+             this one states nothing",
+            Span::new(0, 0),
+            format!("add {} — which is what this machine is", machine.describe()),
+        ));
+    }
     Ok(Program { statics: c.statics, autos: c.autos, body })
 }
 
@@ -31,15 +43,19 @@ struct Binding {
     declaration: usize,
 }
 
-struct Checker {
+struct Checker<'m> {
     scopes: Vec<HashMap<String, Binding>>,
+    /// The machine being built for, to check requirements against.
+    machine: &'m crate::machine::Machine,
+    /// Whether the program has said what it requires. It must, exactly once.
+    required: bool,
     /// Every declaration seen, indexed by the bindings that refer to them.
     declarations: Vec<ast::Decl>,
     statics: Vec<StaticVar>,
     autos: Vec<AutoVar>,
 }
 
-impl Checker {
+impl Checker<'_> {
     fn lookup(&self, name: &str) -> Option<Binding> {
         self.scopes.iter().rev().find_map(|s| s.get(name).copied())
     }
@@ -86,6 +102,11 @@ impl Checker {
         match stmt {
             // A note is addressed to the reader, not the machine.
             Stmt::Note { .. } => Ok(None),
+
+            Stmt::Requires { pointer_bits, little_endian, max_alignment, span } => {
+                self.requirement(*pointer_bits, *little_endian, *max_alignment, *span)?;
+                Ok(None)
+            }
 
             // A permission is addressed to the compiler, and was already read
             // before compilation began. Here it is only checked for sense.
@@ -257,6 +278,56 @@ impl Checker {
             d.name_desc_span,
             format!("write name.{}.end", describe_classes(&permitted)),
         ))
+    }
+
+    /// A requirement is a claim about the machine, so it is checked against
+    /// the machine rather than believed.
+    fn requirement(
+        &mut self,
+        pointer_bits: u32,
+        little_endian: bool,
+        max_alignment: u32,
+        span: Span,
+    ) -> Result<(), Diag> {
+        if self.required {
+            return Err(Diag::new(
+                "a program states its requirements once; this one states them twice",
+                span,
+                "delete this second `requires:` — one applies to the whole program",
+            ));
+        }
+        self.required = true;
+
+        let m = self.machine;
+        let wrong = if pointer_bits != m.pointer_bits {
+            Some(format!("it requires {}-bit pointers, and the machine has {}", pointer_bits, m.pointer_bits))
+        } else if little_endian != m.little_endian {
+            Some(format!(
+                "it requires a {}-endian machine, and this one is {}-endian",
+                if little_endian { "little" } else { "big" },
+                if m.little_endian { "little" } else { "big" }
+            ))
+        } else if max_alignment != m.max_alignment {
+            Some(format!(
+                "it requires {}-byte maximum alignment, and the machine aligns to {}",
+                max_alignment, m.max_alignment
+            ))
+        } else {
+            None
+        };
+
+        match wrong {
+            None => Ok(()),
+            Some(disagreement) => Err(Diag::new(
+                format!(
+                    "a program's requirements are checked against the machine it is built \
+                     for, which is {}; {}",
+                    m.triple, disagreement
+                ),
+                span,
+                format!("write {}, or build for a machine that satisfies this one", m.describe()),
+            )),
+        }
     }
 
     /// A variable is named by restating its declaration. The restatement is

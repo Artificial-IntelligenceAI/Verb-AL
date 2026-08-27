@@ -1,6 +1,6 @@
-tests/errors/restatement-disagrees.val:4:50
+tests/errors/restatement-disagrees.val:5:50
 file: tests/errors/restatement-disagrees.val
-line: 4
+line: 5
 column: 50
 rule broke & where: naming a variable restates its declaration exactly; this restatement of "apples" disagrees about its type
 suggested fix: the declaration says float.1-sign-bit.8-exponent-bits.23-explicit-mantissa-bits

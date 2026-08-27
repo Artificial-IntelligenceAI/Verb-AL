@@ -1,0 +1,6 @@
+tests/errors/wrong-endianness.val:2:1
+file: tests/errors/wrong-endianness.val
+line: 2
+column: 1
+rule broke & where: a program's requirements are checked against the machine it is built for, which is arm64-apple-darwin25.6.0; it requires a big-endian machine, and this one is little-endian
+suggested fix: write requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end, or build for a machine that satisfies this one

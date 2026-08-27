@@ -1,3 +1,3 @@
 allow[compiler:error.error-message]end
 requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
-privacy:local, memory:static, type:truth.1-bit, name.string.newline-too.end: "ready" = 'true'end
+requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end

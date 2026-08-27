@@ -1,4 +1,5 @@
 allow[compiler:error.error-message]end
+requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
 
 action:note, remark:'A write states which character classes its literal content draws on. Parenthesised values are not literal content, so the descriptor says nothing about them.'end
 

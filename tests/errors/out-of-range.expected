@@ -1,6 +1,6 @@
-tests/errors/out-of-range.val:3:112
+tests/errors/out-of-range.val:4:112
 file: tests/errors/out-of-range.val
-line: 3
+line: 4
 column: 112
 rule broke & where: a literal must fit the type it is stored in; 256 does not fit integer.0-sign-bits.8-value-bits.unsigned-binary, which holds 0 through 255
 suggested fix: use a value between 0 and 255, or widen the type
