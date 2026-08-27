@@ -115,7 +115,26 @@ requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end
 
 Only the three properties the source can actually depend on. A CPU model or an
 optimisation level changes nothing a program is allowed to claim, so it is no
-business of the program's.
+business of the program's — it belongs to the build, in a `.machine` file
+written in Verb-AL's own grammar:
+
+```
+machine:aarch64, cpu:apple-m1, features.neon.crypto.end, system:apple.darwin25.macho,
+  calling-convention:aapcs64,
+  optimisation:none,
+  relocation:position-independent,
+  code-model:small end
+```
+
+```bash
+verbal build hello.val -m machines/mac-arm64.machine -o hello
+```
+
+`build` and `emit-ir` require one, because they produce something for a
+machine. `run` and `jit` refuse one, because they execute here. `check` will
+take one, and tells you when it was not given one — a clean exit that quietly
+meant "clean among the claims I bothered to check" is the defect this language
+is organised against.
 
 ## The compiler asks permission
 

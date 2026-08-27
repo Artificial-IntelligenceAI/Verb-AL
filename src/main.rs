@@ -11,11 +11,17 @@ use verbal::value::FAULT_EXIT;
 const USAGE: &str = "\
 verb-al — a language in which nothing is implicit
 
-  verbal run <file>              interpret the program
-  verbal jit <file>              compile in memory and run
-  verbal build <file> [-o exe]   compile to a native executable
-  verbal emit-ir <file>          print the LLVM IR
-  verbal check <file>            report any errors and stop
+  verbal run <file>                    interpret the program, here
+  verbal jit <file>                    compile in memory and run, here
+  verbal build <file> -m <machine>     compile for a machine
+                      [-o exe]
+  verbal emit-ir <file> -m <machine>   print the LLVM IR for a machine
+  verbal check <file> [-m <machine>]   report any errors and stop
+
+A .machine file names the machine an artefact is produced for. `build` and
+`emit-ir` require one, because they produce something for a machine. `run` and
+`jit` refuse one, because they execute here. `check` will take one, and says so
+when it has not been given one.
 ";
 
 fn main() -> ExitCode {
@@ -33,6 +39,32 @@ fn main() -> ExitCode {
         return ExitCode::from(2);
     };
 
+    let named_machine = args
+        .iter()
+        .position(|a| a == "-m")
+        .and_then(|i| args.get(i + 1))
+        .cloned();
+
+    // Which commands may name a machine is not a matter of taste: it follows
+    // from whether the command produces something for a machine or runs here.
+    match (command.as_str(), named_machine.is_some()) {
+        ("build" | "emit-ir", false) => {
+            eprintln!(
+                "verb-al: `{}` produces an artefact for a machine, so it needs one: -m <file>.machine",
+                command
+            );
+            return ExitCode::from(2);
+        }
+        ("run" | "jit", true) => {
+            eprintln!(
+                "verb-al: `{}` executes on this machine, so it cannot be given another one",
+                command
+            );
+            return ExitCode::from(2);
+        }
+        _ => {}
+    }
+
     let text = match std::fs::read_to_string(path) {
         Ok(t) => t,
         Err(e) => {
@@ -42,12 +74,29 @@ fn main() -> ExitCode {
     };
     let source = Source::new(path.clone(), text);
 
-    let machine = match verbal::machine::host() {
-        Ok(machine) => machine,
-        Err(why) => {
-            eprintln!("verb-al: {}", why);
-            return ExitCode::from(2);
-        }
+    // A named machine, or this one when the command runs here.
+    let built = match &named_machine {
+        Some(file) => match verbal::machine_file(file, verbal::may_report(&source)) {
+            Ok(built) => Some(built),
+            Err(rejection) => {
+                match rejection.rendered {
+                    Some(rendered) => eprint!("{}", rendered),
+                    None => eprintln!("verb-al: cannot read {}", file),
+                }
+                return ExitCode::from(1);
+            }
+        },
+        None => None,
+    };
+    let machine = match &built {
+        Some(built) => built.properties.clone(),
+        None => match verbal::machine::host() {
+            Ok(machine) => machine,
+            Err(why) => {
+                eprintln!("verb-al: {}", why);
+                return ExitCode::from(2);
+            }
+        },
     };
     let program = match verbal::front_end(&source, &machine) {
         Ok(p) => p,
@@ -62,7 +111,16 @@ fn main() -> ExitCode {
 
     match command.as_str() {
         "check" => {
-            println!("{}: no errors", path);
+            // A clean exit that quietly meant "clean among the claims I
+            // bothered to check" would be this language's own defect.
+            match &built {
+                Some(built) => println!("{}: no errors, checked for {}", path, built.triple),
+                None => println!(
+                    "{}: no errors, checked against this host ({}) — pass -m <file>.machine \
+                     to check against the machine you are building for",
+                    path, machine.triple
+                ),
+            }
             ExitCode::SUCCESS
         }
 
@@ -83,8 +141,10 @@ fn main() -> ExitCode {
         }
 
         "emit-ir" => {
+            let built = built.as_ref().expect("emit-ir requires a machine");
             let ctx = Context::create();
             let module = codegen::compile(&ctx, &program, &module_name(path));
+            module.set_triple(&built.target.get_triple());
             print!("{}", module.print_to_string().to_string());
             ExitCode::SUCCESS
         }
@@ -102,6 +162,7 @@ fn main() -> ExitCode {
         }
 
         "build" => {
+            let built = built.as_ref().expect("build requires a machine");
             let output = output_path(&args, path);
             let ctx = Context::create();
             let module = codegen::compile(&ctx, &program, &module_name(path));
@@ -110,11 +171,13 @@ fn main() -> ExitCode {
                 return ExitCode::from(2);
             }
             let object = output.with_extension("o");
-            if let Err(e) = codegen::write_object(&module, &object) {
+            if let Err(e) = codegen::write_object(&module, &built.target, &object) {
                 eprintln!("verb-al: {}", e);
                 return ExitCode::from(2);
             }
             let linked = std::process::Command::new("clang")
+                .arg("-target")
+                .arg(&built.triple)
                 .arg(&object)
                 .arg("-o")
                 .arg(&output)

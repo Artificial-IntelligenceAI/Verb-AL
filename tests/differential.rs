@@ -13,6 +13,10 @@ use std::process::Command;
 /// the suite, like the corpus, specific to a 64-bit little-endian host.
 const REQUIREMENT: &str =
     "requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end";
+/// The machine this suite builds for. Named rather than inferred, like every
+/// other build — which makes the suite, like the corpus, specific to this host.
+const MACHINE: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/machines/mac-arm64.machine");
+
 const PREAMBLE: &str = concat!(
     "allow[compiler:error.error-message]end\n",
     "requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignment end"
@@ -42,7 +46,15 @@ fn interpret(program: &Path) -> Outcome {
 fn compile_and_run(program: &Path) -> Outcome {
     let stem = program.file_stem().unwrap().to_string_lossy().into_owned();
     let exe = std::env::temp_dir().join(format!("verbal-test-{}", stem));
-    let built = invoke(Command::new(EXE).arg("build").arg(program).arg("-o").arg(&exe));
+    let built = invoke(
+        Command::new(EXE)
+            .arg("build")
+            .arg(program)
+            .arg("-m")
+            .arg(MACHINE)
+            .arg("-o")
+            .arg(&exe),
+    );
     assert_eq!(
         built.code, 0,
         "compiling {} failed:\n{}{}",
@@ -277,6 +289,39 @@ fn a_write_names_a_variable_and_nothing_else() {
             outcome.stderr
         );
     }
+}
+
+/// Which commands may name a machine follows from whether they produce
+/// something for one or run here, and `check` must say when it was not given
+/// one — a clean exit meaning "clean among the claims I bothered to check" is
+/// the defect this language is organised against.
+#[test]
+fn a_machine_is_named_where_it_matters() {
+    let program = concat!(env!("CARGO_MANIFEST_DIR"), "/examples/hello-world.val");
+
+    let refused = invoke(Command::new(EXE).arg("build").arg(program));
+    assert_ne!(refused.code, 0, "build without a machine should refuse");
+    assert!(refused.stderr.contains("needs one"), "got {:?}", refused.stderr);
+
+    let refused = invoke(Command::new(EXE).arg("run").arg(program).arg("-m").arg(MACHINE));
+    assert_ne!(refused.code, 0, "run with a machine should refuse");
+    assert!(refused.stderr.contains("executes on this machine"), "got {:?}", refused.stderr);
+
+    let bare = invoke(Command::new(EXE).arg("check").arg(program));
+    assert_eq!(bare.code, 0);
+    assert!(
+        bare.stdout.contains("checked against this host"),
+        "check must say it had no machine: {:?}",
+        bare.stdout
+    );
+
+    let named = invoke(Command::new(EXE).arg("check").arg(program).arg("-m").arg(MACHINE));
+    assert_eq!(named.code, 0);
+    assert!(
+        named.stdout.contains("checked for aarch64-apple-darwin25-macho"),
+        "check must say which machine: {:?}",
+        named.stdout
+    );
 }
 
 /// Two unlexable characters in one file once crashed the permission scan,

@@ -337,6 +337,89 @@ Note two departures from §3.3, both deliberate:
   `end` would otherwise abut a bare word, and `…alignmentend` is one word to any
   lexer. Everywhere else `end` follows a quote or a bracket and needs no space.
 
+### 6.1 The machine file
+
+A program says what it *requires*; a **machine file** says what a machine *is*.
+It holds exactly one statement and nothing else, written in Verb-AL's own
+grammar — a second syntax inside one project would be its own implicitness.
+
+```
+machine:aarch64, cpu:apple-m1, features.neon.crypto.end, system:apple.darwin25.macho,
+  calling-convention:aapcs64,
+  optimisation:none,
+  relocation:position-independent,
+  code-model:small end
+```
+
+One statement, not several: splitting it would leave which clauses belong to
+the same machine a fact nobody states. A `.val` file may not contain a
+`machine:` statement, and a machine file may contain nothing else; each
+rejection is an error in the ordinary shape, so neither file can quietly become
+the other.
+
+| Clause | Is |
+|---|---|
+| `machine:` | the architecture, named as LLVM names it |
+| `cpu:` | the processor |
+| `features.…end` / `no-extra-features` | instruction-set extensions, an allowance like §3.4 — with the empty case said aloud rather than written as an empty list |
+| `system:` | vendor, operating system (version included), object format |
+| `calling-convention:` | how arguments are passed |
+| `optimisation:` | `none`, `less`, `default` or `aggressive` |
+| `relocation:` | `position-independent`, `static` or `dynamic-no-pic` |
+| `code-model:` | `small`, `kernel`, `medium`, `large`, `default` or `jit-default` |
+
+It states **none** of the three properties a program may require. Naming the
+architecture settles all three, and restating them here would be the
+architecture-to-properties table §3.3 refuses for types. The program states
+requirements, the machine names a machine, and LLVM referees between them. That
+is also why byte order is a requirement but not a machine clause: a bi-endian
+architecture distinguishes itself in its own name, `aarch64` against
+`aarch64_be`, while a program never names an architecture at all.
+
+Names are LLVM's throughout — `aarch64` rather than "ARM64", `macho` rather
+than "Mach-O" — because LLVM is the referee and a translation layer would be
+another table. An architecture LLVM does not know is an error listing the ones
+it does; an architecture it knows but cannot emit for is a *different* error,
+since knowing a name and being able to use it are different facts.
+
+There is exactly one claim LLVM will not referee, and so exactly one table this
+compiler carries: the calling convention. It is checked against what the
+architecture and system imply, and an architecture the table does not cover is
+refused rather than waved through, so the table's edge is an error rather than
+a silence.
+
+Note `optimisation:none` in the example. There is no level named "default" that
+is also the default: an optimisation level can change floating-point results,
+and §9 promises the interpreter and the compiled program agree bit for bit, so
+the level is a thing the build states rather than a thing that happens.
+
+### 6.2 Which commands name a machine
+
+Whether a command takes a machine follows from whether it produces something
+for one:
+
+| Command | Machine |
+|---|---|
+| `build`, `emit-ir` | **required** — they produce an artefact for a machine |
+| `run`, `jit` | **refused** — they execute here, so the machine is this one |
+| `check` | optional, and it says which it used |
+
+```
+$ verbal check hello.val
+hello.val: no errors, checked against this host (arm64-apple-darwin25.6.0) — pass -m …
+
+$ verbal check hello.val -m machines/mac-arm64.machine
+hello.val: no errors, checked for aarch64-apple-darwin25-macho
+```
+
+`check` may not exit cleanly without saying what it checked against. A clean
+exit that quietly meant "clean among the claims I bothered to check" is the
+defect this language is organised against.
+
+`run` refuses a machine rather than interpreting as though it were one: the
+interpreter's arithmetic is this machine's arithmetic, and pretending otherwise
+would be the drift §9's promise exists to catch.
+
 ## 7. Permissions
 
 The compiler does not assume it may speak. A program that has not permitted

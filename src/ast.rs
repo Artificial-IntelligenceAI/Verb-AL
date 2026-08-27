@@ -206,3 +206,62 @@ impl Expr {
         }
     }
 }
+
+// ---- the machine file -----------------------------------------------------
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Optimisation {
+    None,
+    Less,
+    Default,
+    Aggressive,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Relocation {
+    PositionIndependent,
+    Static,
+    DynamicNoPic,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CodeModelChoice {
+    Default,
+    JitDefault,
+    Small,
+    Kernel,
+    Medium,
+    Large,
+}
+
+/// The contents of a `.machine` file: one machine, named in full.
+///
+/// A program says what it *requires* (§6); a machine file says what a machine
+/// *is*. It deliberately states none of the three properties a program may
+/// require — naming the architecture settles all of them, and repeating them
+/// here would be the table §3.3 refuses.
+#[derive(Clone, Debug)]
+pub struct MachineSpec {
+    pub arch: String,
+    pub arch_span: Span,
+    pub cpu: String,
+    pub cpu_span: Span,
+    pub features: Vec<String>,
+    pub vendor: String,
+    pub os: String,
+    pub object_format: String,
+    pub system_span: Span,
+    pub calling_convention: String,
+    pub calling_convention_span: Span,
+    pub optimisation: Optimisation,
+    pub relocation: Relocation,
+    pub code_model: CodeModelChoice,
+    pub span: Span,
+}
+
+impl MachineSpec {
+    /// `arch-vendor-os-objectformat`, which LLVM parses and clang accepts.
+    pub fn triple(&self) -> String {
+        format!("{}-{}-{}-{}", self.arch, self.vendor, self.os, self.object_format)
+    }
+}

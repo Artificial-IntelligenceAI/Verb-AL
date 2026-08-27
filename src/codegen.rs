@@ -773,24 +773,16 @@ fn symbol_for(index: usize, name: &str) -> String {
 
 // ---- emitting artefacts ---------------------------------------------------
 
-pub fn write_object(module: &Module<'_>, path: &Path) -> Result<(), String> {
-    Target::initialize_all(&InitializationConfig::default());
-    let triple = TargetMachine::get_default_triple();
-    let target = Target::from_triple(&triple).map_err(|e| e.to_string())?;
-    let machine = target
-        .create_target_machine(
-            &triple,
-            TargetMachine::get_host_cpu_name().to_str().unwrap_or("generic"),
-            TargetMachine::get_host_cpu_features().to_str().unwrap_or(""),
-            OptimizationLevel::Default,
-            RelocMode::PIC,
-            CodeModel::Default,
-        )
-        .ok_or("this host has no target machine")?;
-    module.set_triple(&triple);
-    machine
-        .write_to_file(module, FileType::Object, path)
-        .map_err(|e| e.to_string())
+/// Emit an object for the machine the build named. Nothing here is taken from
+/// the host: the triple, processor, features, optimisation, relocation mode and
+/// code model all came from the `.machine` file (SPEC §6.1).
+pub fn write_object(
+    module: &Module<'_>,
+    machine: &TargetMachine,
+    path: &Path,
+) -> Result<(), String> {
+    module.set_triple(&machine.get_triple());
+    machine.write_to_file(module, FileType::Object, path).map_err(|e| e.to_string())
 }
 
 pub fn jit(module: &Module<'_>) -> Result<i32, String> {

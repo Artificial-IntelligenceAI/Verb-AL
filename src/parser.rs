@@ -10,6 +10,23 @@ use crate::types::{CharClass, FloatKind, Type};
 const ORDER: &str =
     "a declaration states privacy, memory, type and name in that order, omitting none";
 
+/// A `.machine` file holds exactly one machine and nothing else.
+pub fn parse_machine(tokens: &[Token]) -> Result<MachineSpec, Diag> {
+    let mut p = Parser { tokens, pos: 0 };
+    let spec = p.machine()?;
+    if !p.at_eof() {
+        return Err(Diag::new(
+            format!(
+                "a machine file names one machine and stops; {} follows it",
+                p.peek().describe()
+            ),
+            p.peek_span(),
+            "delete everything after the machine, or move it into a program",
+        ));
+    }
+    Ok(spec)
+}
+
 pub fn parse(tokens: &[Token]) -> Result<Vec<Stmt>, Diag> {
     let mut p = Parser { tokens, pos: 0 };
     let mut out = Vec::new();
@@ -123,6 +140,11 @@ impl<'a> Parser<'a> {
             Some("allow") => self.permission(),
             Some("standard-output") => self.print(),
             Some("requires") => self.requires(),
+            Some("machine") => Err(Diag::new(
+                "a machine is named in a .machine file, not in a program",
+                self.peek_span(),
+                "move this statement into a .machine file and pass it with -m",
+            )),
             _ => Err(Diag::new(
                 format!(
                     "every statement begins with `privacy`, `action`, `allow`, `standard-output` \
@@ -134,6 +156,147 @@ impl<'a> Parser<'a> {
                  `standard-output:` to write, or `requires:` to say what the machine must be",
             )),
         }
+    }
+
+    /// The one statement a `.machine` file holds.
+    fn machine(&mut self) -> Result<MachineSpec, Diag> {
+        let start = self.expect_word("machine", "to begin a machine")?;
+        self.expect(Tok::Colon, "after `machine`")?;
+        let (arch, arch_span) = self.any_word("the architecture, such as `aarch64`")?;
+
+        self.expect(Tok::Comma, "after the architecture")?;
+        self.expect_word("cpu", "as the second attribute of a machine")?;
+        self.expect(Tok::Colon, "after `cpu`")?;
+        let (cpu, cpu_span) = self.any_word("the processor, such as `apple-m1`")?;
+
+        self.expect(Tok::Comma, "after the processor")?;
+        let features = self.features()?;
+
+        self.expect(Tok::Comma, "after the features")?;
+        self.expect_word("system", "as the fourth attribute of a machine")?;
+        self.expect(Tok::Colon, "after `system`")?;
+        let (vendor, sys_start) = self.any_word("the vendor, such as `apple`")?;
+        self.expect(Tok::Dot, "after the vendor")?;
+        let (os, _) = self.any_word("the operating system, such as `darwin`")?;
+        self.expect(Tok::Dot, "after the operating system")?;
+        let (object_format, sys_end) = self.any_word("the object format, such as `mach-o`")?;
+
+        self.expect(Tok::Comma, "after the system")?;
+        self.expect_word("calling-convention", "as the fifth attribute of a machine")?;
+        self.expect(Tok::Colon, "after `calling-convention`")?;
+        let (calling_convention, calling_convention_span) =
+            self.any_word("the calling convention, such as `aapcs64`")?;
+
+        self.expect(Tok::Comma, "after the calling convention")?;
+        self.expect_word("optimisation", "as the sixth attribute of a machine")?;
+        self.expect(Tok::Colon, "after `optimisation`")?;
+        let (word, span) = self.any_word("the optimisation level")?;
+        let optimisation = match word.as_str() {
+            "none" => Optimisation::None,
+            "less" => Optimisation::Less,
+            "default" => Optimisation::Default,
+            "aggressive" => Optimisation::Aggressive,
+            other => {
+                return Err(Diag::new(
+                    format!("an optimisation level is one of four; `{}` is none of them", other),
+                    span,
+                    "write `none`, `less`, `default` or `aggressive` — `none` if you want the \
+                     arithmetic to be exactly what the program said",
+                ))
+            }
+        };
+
+        self.expect(Tok::Comma, "after the optimisation level")?;
+        self.expect_word("relocation", "as the seventh attribute of a machine")?;
+        self.expect(Tok::Colon, "after `relocation`")?;
+        let (word, span) = self.any_word("the relocation mode")?;
+        let relocation = match word.as_str() {
+            "position-independent" => Relocation::PositionIndependent,
+            "static" => Relocation::Static,
+            "dynamic-no-pic" => Relocation::DynamicNoPic,
+            other => {
+                return Err(Diag::new(
+                    format!("a relocation mode is one of three; `{}` is none of them", other),
+                    span,
+                    "write `position-independent`, `static` or `dynamic-no-pic`",
+                ))
+            }
+        };
+
+        self.expect(Tok::Comma, "after the relocation mode")?;
+        self.expect_word("code-model", "as the eighth attribute of a machine")?;
+        self.expect(Tok::Colon, "after `code-model`")?;
+        let (word, span) = self.any_word("the code model")?;
+        let code_model = match word.as_str() {
+            "default" => CodeModelChoice::Default,
+            "jit-default" => CodeModelChoice::JitDefault,
+            "small" => CodeModelChoice::Small,
+            "kernel" => CodeModelChoice::Kernel,
+            "medium" => CodeModelChoice::Medium,
+            "large" => CodeModelChoice::Large,
+            other => {
+                return Err(Diag::new(
+                    format!("a code model is one of six; `{}` is none of them", other),
+                    span,
+                    "write `small`, `kernel`, `medium`, `large`, `default` or `jit-default`",
+                ))
+            }
+        };
+
+        let end = self.expect_word("end", "to close the machine")?;
+        Ok(MachineSpec {
+            arch,
+            arch_span,
+            cpu,
+            cpu_span,
+            features,
+            vendor,
+            os,
+            object_format,
+            system_span: sys_start.to(sys_end),
+            calling_convention,
+            calling_convention_span,
+            optimisation,
+            relocation,
+            code_model,
+            span: start.to(end),
+        })
+    }
+
+    /// `features.neon.crypto.end`, or `no-extra-features` for the empty case,
+    /// which §3.4's reasoning demands be sayable out loud.
+    fn features(&mut self) -> Result<Vec<String>, Diag> {
+        if self.peek_word() == Some("no-extra-features") {
+            self.bump();
+            return Ok(Vec::new());
+        }
+        self.expect_word("features", "as the third attribute of a machine")
+            .map_err(|d| d.also("or `no-extra-features` if the processor needs none named"))?;
+        let mut features = Vec::new();
+        loop {
+            self.expect(Tok::Dot, "in the feature list")?;
+            let (w, span) = self.any_word("a feature, or `end` to close the list")?;
+            if w == "end" {
+                break;
+            }
+            if features.contains(&w) {
+                return Err(Diag::new(
+                    format!("a feature list is a set; `{}` appears twice", w),
+                    span,
+                    format!("delete this second `.{}`", w),
+                ));
+            }
+            features.push(w);
+        }
+        if features.is_empty() {
+            return Err(Diag::new(
+                "an empty feature list is written `no-extra-features`, so that naming none \
+                 is said rather than implied",
+                self.peek_span(),
+                "write `no-extra-features`",
+            ));
+        }
+        Ok(features)
     }
 
     /// `requires:target.64-bit-pointers.little-endian.8-byte-maximum-alignmentend`

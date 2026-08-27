@@ -1,0 +1,5 @@
+machine:aarch64, cpu:apple-m1, features.neon.crypto.end, system:apple.darwin25.macho,
+  calling-convention:aapcs64,
+  optimisation:none,
+  relocation:position-independent,
+  code-model:small end
