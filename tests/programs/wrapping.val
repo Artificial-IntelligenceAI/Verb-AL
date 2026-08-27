@@ -1,3 +1,5 @@
+allow[compiler:error.error-message]end
+
 action:note, remark:'Integers wrap at the width their descriptor declares, signed and unsigned alike.'end
 
 privacy:local, memory:automatic, type:integer.1-sign-bit.7-value-bits.twos-complement, name.string.space.end: "signed byte" = '127'end

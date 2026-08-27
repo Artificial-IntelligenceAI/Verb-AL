@@ -1,5 +1,6 @@
-error: the program ends before this block is closed with `end-branch`
- --> tests/errors/unclosed-block.val:5:1
+error: this block is never closed with `end-branch`
+ --> tests/errors/unclosed-block.val:4:1
   |
-5 | 
-  | ^
+4 | action:branch, condition:"go",
+  | ^^^^^^
+  = the program ends while it is still open

@@ -1,2 +1,4 @@
+allow[compiler:error.error-message]end
+
 action:note, remark:'The descriptor permits letters and digits, but the name reaches for a hyphen.'end
 privacy:local, memory:static, type:truth.1-bit, name.string.digit.end: "well-formed" = 'true'end

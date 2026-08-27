@@ -1,3 +1,5 @@
+allow[compiler:error.error-message]end
+
 action:note, remark:'Every UTF-8 length, encoded by the compiler and by Rust to the same bytes.'end
 
 privacy:local, memory:static, type:character.32-bits.unicode-scalar, name.string.end: "one" = 'A'end

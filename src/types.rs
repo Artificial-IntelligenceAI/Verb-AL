@@ -29,7 +29,7 @@ impl FloatKind {
         }
     }
 
-    /// The shortest `%g` precision that round-trips this layout. See SPEC §6.
+    /// The shortest `%g` precision that round-trips this layout. See SPEC §7.
     pub fn print_precision(self) -> u32 {
         match self {
             FloatKind::Half => 5,

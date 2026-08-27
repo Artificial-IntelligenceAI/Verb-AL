@@ -1,3 +1,5 @@
+allow[compiler:error.error-message]end
+
 action:note, remark:'Text is a pointer and a length; joining allocates, comparing walks the bytes.'end
 
 privacy:local, memory:automatic, type:text.utf-8.pointer-and-length, name.string.end: "greeting" = 'hello'end

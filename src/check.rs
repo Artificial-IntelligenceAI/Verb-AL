@@ -33,6 +33,22 @@ impl Checker {
         self.scopes.iter().rev().find_map(|s| s.get(name).copied())
     }
 
+    fn unknown_name(&self, name: &str, span: Span) -> Diag {
+        let mut diag = Diag::new(format!("nothing named \"{}\" has been declared", name), span);
+        // A near miss is far more useful than a lecture, so lead with it.
+        let nearest = self
+            .scopes
+            .iter()
+            .flat_map(|s| s.keys())
+            .map(|declared| (distance(name, declared), declared))
+            .filter(|(d, _)| *d * 3 <= name.chars().count().max(1))
+            .min_by_key(|(d, _)| *d);
+        if let Some((_, declared)) = nearest {
+            diag = diag.note(format!("there is a name \"{}\" in scope — did you mean that?", declared));
+        }
+        diag.note("declare it first, with its privacy, memory, type and name descriptor")
+    }
+
     fn block(&mut self, stmts: &[Stmt]) -> Result<Vec<TStmt>, Diag> {
         self.scopes.push(HashMap::new());
         let out = self.statements(stmts);
@@ -55,6 +71,22 @@ impl Checker {
             // A note is addressed to the reader, not the machine.
             Stmt::Note { .. } => Ok(None),
 
+            // A permission is addressed to the compiler, and was already read
+            // before compilation began. Here it is only checked for sense.
+            Stmt::Allow { permission, permission_span, .. } => {
+                if !crate::permission::KNOWN.contains(&permission.as_str()) {
+                    return Err(Diag::new(
+                        format!("`{}` is not something the compiler can be permitted", permission),
+                        *permission_span,
+                    )
+                    .note(format!(
+                        "the permissions are: {}",
+                        crate::permission::KNOWN.join(", ")
+                    )));
+                }
+                Ok(None)
+            }
+
             Stmt::Decl(d) => self.declaration(d),
 
             Stmt::Say { source, .. } => {
@@ -65,7 +97,7 @@ impl Checker {
 
             Stmt::Assign { target, target_span, value, .. } => {
                 let Some(binding) = self.lookup(target) else {
-                    return Err(unknown_name(target, *target_span));
+                    return Err(self.unknown_name(target, *target_span));
                 };
                 let value = self.expr(value, Some(binding.ty))?;
                 Ok(Some(TStmt::Assign { place: binding.place, ty: binding.ty, value }))
@@ -192,7 +224,7 @@ impl Checker {
         let got = match e {
             Expr::Ident { name, span } => {
                 let Some(binding) = self.lookup(name) else {
-                    return Err(unknown_name(name, *span));
+                    return Err(self.unknown_name(name, *span));
                 };
                 TExpr::Read { place: binding.place, ty: binding.ty }
             }
@@ -306,9 +338,23 @@ impl Checker {
     }
 }
 
-fn unknown_name(name: &str, span: Span) -> Diag {
-    Diag::new(format!("nothing named \"{}\" has been declared", name), span)
-        .note("declare it first, with its privacy, memory, type and name descriptor")
+/// How many single-character edits turn one name into another. Used only to
+/// decide whether a declared name is close enough to be worth suggesting.
+fn distance(a: &str, b: &str) -> usize {
+    let a: Vec<char> = a.chars().collect();
+    let b: Vec<char> = b.chars().collect();
+    let mut row: Vec<usize> = (0..=b.len()).collect();
+    for (i, ac) in a.iter().enumerate() {
+        let mut previous = row[0];
+        row[0] = i + 1;
+        for (j, bc) in b.iter().enumerate() {
+            let cost = usize::from(ac != bc);
+            let replace = previous + cost;
+            previous = row[j + 1];
+            row[j + 1] = replace.min(row[j] + 1).min(row[j + 1] + 1);
+        }
+    }
+    row[b.len()]
 }
 
 /// Fold a static initializer to a value, or explain why it cannot be.

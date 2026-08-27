@@ -1,3 +1,2 @@
 allow[compiler:error.error-message]end
-
-action:say, source:"never declared"end
+allow[compiler:error.telepathy]end

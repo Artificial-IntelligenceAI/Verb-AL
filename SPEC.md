@@ -35,6 +35,8 @@ statement := attribute ("," attribute)* terminator
 attribute := key [descriptor] ":" value
 ```
 
+There are three kinds: declarations (§3), actions (§4) and permissions (§5).
+
 Two kinds of dotted **descriptor** appear, and the difference is deliberate:
 
 | Form | Meaning | Example |
@@ -213,7 +215,36 @@ A block introduces a scope. Names declared inside it leave scope at
 `end-branch` / `end-repetition`, whatever their `memory` class. Shadowing an
 existing name is a compile error.
 
-## 5. Expressions
+## 5. Permissions
+
+The compiler does not assume it may speak. A program that has not permitted
+error messages does not receive error messages: it fails, with a status and
+nothing else.
+
+```
+allow[compiler:error.error-message]end
+```
+
+Permission is a statement like any other — `allow`, a bracketed permission, and
+`end`. Inside the brackets, a subject and a dotted path saying what the subject
+may do.
+
+A grant covers itself and everything beneath it, so `allow[compiler:error]end`
+also permits `compiler:error.error-message`. Version 1 recognises exactly those
+two; anything else in the brackets is an error, which of course you will only be
+told about if some other grant has already permitted it.
+
+Permissions are read **before compilation begins**, from a tolerant scan of the
+whole file, because whether the compiler may explain itself must be settled
+before it discovers that it wants to. That scan reads past text it cannot
+lex, so a file whose opt-in is intact still gets its diagnostics even when the
+rest of it does not tokenise. Position in the file does not matter; a permission
+applies to the whole of it.
+
+Runtime faults are not covered. `compiler:` grants concern the compiler, and a
+program that divides by zero while running still says so.
+
+## 6. Expressions
 
 ```
 expr    := primary | unary primary | primary binary primary
@@ -244,7 +275,7 @@ fact left implicit, and this language does not leave facts implicit:
 There is **no implicit conversion of any kind**. An integer and a float may not
 meet in the same operator.
 
-## 6. Runtime semantics
+## 7. Runtime semantics
 
 **Integer arithmetic wraps** at the declared width, signed and unsigned alike;
 there is no undefined behaviour. LLVM `add`/`sub`/`mul` are emitted without
@@ -274,7 +305,7 @@ under `verbal.<index>.<ascii echo of the name>`. This matters only to
 `privacy:public`, whose exported symbol is that mangled form rather than the
 name as written.
 
-## 7. Deliberately absent from version 1
+## 8. Deliberately absent from version 1
 
 Functions — the user has not yet decided their syntax, and guessing would be
 worse than waiting. Also absent: aggregates (lists, records), imports, explicit

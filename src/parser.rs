@@ -6,6 +6,10 @@ use crate::diag::{Diag, Span};
 use crate::lexer::{Tok, Token};
 use crate::types::{CharClass, FloatKind, Type};
 
+/// Said whenever a declaration's attributes arrive out of order or short.
+const ORDER: &str =
+    "a declaration states, in this order: privacy, memory, type, name — and omits none of them";
+
 pub fn parse(tokens: &[Token]) -> Result<Vec<Stmt>, Diag> {
     let mut p = Parser { tokens, pos: 0 };
     let mut out = Vec::new();
@@ -99,12 +103,42 @@ impl<'a> Parser<'a> {
         match self.peek_word() {
             Some("privacy") => self.declaration(),
             Some("action") => self.action(),
+            Some("allow") => self.permission(),
             _ => Err(Diag::new(
                 format!("expected a statement, found {}", self.peek().describe()),
                 self.peek_span(),
             )
-            .note("a statement begins with `privacy:` (a declaration) or `action:` (an action)")),
+            .note(
+                "a statement begins with `privacy:` (a declaration), `action:` (an action) \
+                 or `allow[` (a permission)",
+            )),
         }
+    }
+
+    /// `allow[compiler:error.error-message]end`
+    fn permission(&mut self) -> Result<Stmt, Diag> {
+        let start = self.expect_word("allow", "to begin a permission")?;
+        self.expect(Tok::LBracket, "after `allow`")?;
+        let (subject, subject_span) =
+            self.any_word("the subject being permitted, such as `compiler`")?;
+        self.expect(Tok::Colon, "after the subject")?;
+        let (head, head_span) = self.any_word("what the subject is permitted to do")?;
+        let mut path = head;
+        let mut span = subject_span.to(head_span);
+        while *self.peek() == Tok::Dot {
+            self.bump();
+            let (part, part_span) = self.any_word("another part of the permission")?;
+            path.push('.');
+            path.push_str(&part);
+            span = span.to(part_span);
+        }
+        self.expect(Tok::RBracket, "to close the permission")?;
+        let end = self.expect_word("end", "to close the permission statement")?;
+        Ok(Stmt::Allow {
+            permission: format!("{}:{}", subject, path),
+            permission_span: span,
+            span: start.to(end),
+        })
     }
 
     fn declaration(&mut self) -> Result<Stmt, Diag> {
@@ -121,7 +155,8 @@ impl<'a> Parser<'a> {
         };
 
         self.expect(Tok::Comma, "after the privacy")?;
-        self.expect_word("memory", "as the second attribute of a declaration")?;
+        self.expect_word("memory", "as the second attribute of a declaration")
+            .map_err(|d| d.note(ORDER))?;
         self.expect(Tok::Colon, "after `memory`")?;
         let (word, span) = self.any_word("`static` or `automatic`")?;
         let memory = match word.as_str() {
@@ -134,7 +169,8 @@ impl<'a> Parser<'a> {
         };
 
         self.expect(Tok::Comma, "after the memory class")?;
-        self.expect_word("type", "as the third attribute of a declaration")?;
+        self.expect_word("type", "as the third attribute of a declaration")
+            .map_err(|d| d.note(ORDER))?;
         self.expect(Tok::Colon, "after `type`")?;
         let (ty, ty_span) = self.type_descriptor()?;
 
@@ -177,7 +213,8 @@ impl<'a> Parser<'a> {
 
     /// `name.string.space.comma.emoji.end`
     fn name_descriptor(&mut self) -> Result<(Vec<CharClass>, Span), Diag> {
-        let start = self.expect_word("name", "as the fourth attribute of a declaration")?;
+        let start = self.expect_word("name", "as the fourth attribute of a declaration")
+            .map_err(|d| d.note(ORDER))?;
         let mut classes = Vec::new();
         let mut span = start;
         loop {
@@ -262,12 +299,12 @@ impl<'a> Parser<'a> {
                 self.expect(Tok::Comma, "after the condition")?;
                 self.expect_word("then", "to introduce what happens when the condition holds")?;
                 self.expect(Tok::Colon, "after `then`")?;
-                let then = self.block(&["otherwise", "end-branch"], "end-branch")?;
+                let then = self.block(&["otherwise", "end-branch"], "end-branch", start)?;
                 let mut otherwise = Vec::new();
                 if self.peek_word() == Some("otherwise") {
                     self.bump();
                     self.expect(Tok::Colon, "after `otherwise`")?;
-                    otherwise = self.block(&["end-branch"], "end-branch")?;
+                    otherwise = self.block(&["end-branch"], "end-branch", start)?;
                 }
                 let end = self.expect_word("end-branch", "to close the branch")?;
                 Ok(Stmt::Branch { cond, then, otherwise, span: start.to(end) })
@@ -281,7 +318,7 @@ impl<'a> Parser<'a> {
                 self.expect(Tok::Comma, "after the condition")?;
                 self.expect_word("do", "to introduce the body of the repetition")?;
                 self.expect(Tok::Colon, "after `do`")?;
-                let body = self.block(&["end-repetition"], "end-repetition")?;
+                let body = self.block(&["end-repetition"], "end-repetition", start)?;
                 let end = self.expect_word("end-repetition", "to close the repetition")?;
                 Ok(Stmt::Repeat { cond, body, span: start.to(end) })
             }
@@ -292,7 +329,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Statements up to (but not consuming) one of `stops`.
-    fn block(&mut self, stops: &[&str], closer: &str) -> Result<Vec<Stmt>, Diag> {
+    fn block(&mut self, stops: &[&str], closer: &str, opened_at: Span) -> Result<Vec<Stmt>, Diag> {
         let mut out = Vec::new();
         loop {
             // A comma between statements is permitted but never required.
@@ -306,9 +343,10 @@ impl<'a> Parser<'a> {
             }
             if self.at_eof() {
                 return Err(Diag::new(
-                    format!("the program ends before this block is closed with `{}`", closer),
-                    self.peek_span(),
-                ));
+                    format!("this block is never closed with `{}`", closer),
+                    opened_at,
+                )
+                .note("the program ends while it is still open"));
             }
             out.push(self.statement()?);
         }

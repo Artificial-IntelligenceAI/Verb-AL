@@ -7,7 +7,7 @@
 use crate::types::Type;
 use crate::value::Value;
 
-/// The printf conversion a type is written with. See SPEC §6.
+/// The printf conversion a type is written with. See SPEC §7.
 pub fn conversion(ty: Type) -> String {
     match ty {
         Type::Int { signed: true, .. } => "%lld".to_string(),

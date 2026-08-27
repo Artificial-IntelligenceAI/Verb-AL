@@ -1,6 +1,6 @@
 error: "flag" is already declared
- --> tests/errors/redeclared.val:2:66
+ --> tests/errors/redeclared.val:4:66
   |
-2 | privacy:local, memory:static, type:truth.1-bit, name.string.end: "flag" = 'false'end
+4 | privacy:local, memory:static, type:truth.1-bit, name.string.end: "flag" = 'false'end
   |                                                                  ^^^^^^
   = Verb-AL does not let one name stand for two things

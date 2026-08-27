@@ -1,3 +1,5 @@
+allow[compiler:error.error-message]end
+
 action:note, remark:'A block is a scope, so the same name may be declared again after it closes.'end
 
 privacy:local, memory:automatic, type:truth.1-bit, name.string.end: "go" = 'true'end

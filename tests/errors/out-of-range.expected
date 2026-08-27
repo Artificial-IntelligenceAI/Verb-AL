@@ -1,6 +1,6 @@
 error: 256 does not fit in integer.0-sign-bits.8-value-bits.unsigned-binary
- --> tests/errors/out-of-range.val:1:112
+ --> tests/errors/out-of-range.val:3:112
   |
-1 | privacy:local, memory:static, type:integer.0-sign-bits.8-value-bits.unsigned-binary, name.string.end: "byte" = '256'end
+3 | privacy:local, memory:static, type:integer.0-sign-bits.8-value-bits.unsigned-binary, name.string.end: "byte" = '256'end
   |                                                                                                                ^^^^^
   = that type holds 0 through 255

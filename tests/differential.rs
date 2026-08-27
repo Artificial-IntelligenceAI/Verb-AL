@@ -113,6 +113,50 @@ fn a_fault_stops_at_the_fault() {
     }
 }
 
+/// A program that has not permitted error messages does not get error
+/// messages. It fails, and says nothing at all about why.
+#[test]
+fn silence_is_the_default() {
+    let program = std::env::temp_dir().join("verbal-unpermitted.val");
+    std::fs::write(
+        &program,
+        "privacy:local, memory:static, type:truth.1-bit, name.string.end: \"well-formed\" = 'true'end\n",
+    )
+    .unwrap();
+    let outcome = invoke(Command::new(EXE).arg("check").arg(&program));
+    assert_eq!(outcome.code, 1, "the program should still fail");
+    assert_eq!(outcome.stderr, "", "but it never permitted an explanation");
+    assert_eq!(outcome.stdout, "");
+
+    // The same program, having asked, is told.
+    let permitted = std::env::temp_dir().join("verbal-permitted.val");
+    std::fs::write(
+        &permitted,
+        format!("allow[compiler:error.error-message]end\n{}", std::fs::read_to_string(&program).unwrap()),
+    )
+    .unwrap();
+    let outcome = invoke(Command::new(EXE).arg("check").arg(&permitted));
+    assert_eq!(outcome.code, 1);
+    assert!(
+        outcome.stderr.contains("does not permit"),
+        "expected the diagnostic, got {:?}",
+        outcome.stderr
+    );
+}
+
+/// Granting a branch grants everything beneath it.
+#[test]
+fn a_grant_covers_what_is_beneath_it() {
+    let program = std::env::temp_dir().join("verbal-branch-grant.val");
+    std::fs::write(
+        &program,
+        "allow[compiler:error]end\nprivacy:local, memory:static, type:truth.1-bit, name.string.end: \"well-formed\" = 'true'end\n",
+    )
+    .unwrap();
+    let outcome = invoke(Command::new(EXE).arg("check").arg(&program));
+    assert!(outcome.stderr.contains("does not permit"), "got {:?}", outcome.stderr);
+}
+
 /// Diagnostics are part of the language, so they are recorded and compared.
 #[test]
 fn diagnostics_are_stable() {

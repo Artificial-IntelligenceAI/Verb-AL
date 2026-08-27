@@ -1,6 +1,6 @@
 error: nothing named "never declared" has been declared
- --> tests/errors/unknown-name.val:1:20
+ --> tests/errors/unknown-name.val:3:20
   |
-1 | action:say, source:"never declared"end
+3 | action:say, source:"never declared"end
   |                    ^^^^^^^^^^^^^^^^
   = declare it first, with its privacy, memory, type and name descriptor

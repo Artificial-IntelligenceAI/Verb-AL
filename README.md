@@ -75,6 +75,31 @@ verbal check examples/fizzbuzz.val      # report errors and stop
 Four different numbers, because they are four different layouts, and Verb-AL
 prints each at the shortest precision that round-trips it.
 
+## The compiler asks permission
+
+Nothing is implicit — including whether the compiler may talk to you. A program
+that has not permitted error messages does not get error messages. It fails,
+and says nothing about why:
+
+```bash
+$ verbal check broken.val
+$ echo $?
+1
+```
+
+Opt in, and it explains itself:
+
+```
+allow[compiler:error.error-message]end
+```
+
+A grant covers everything beneath it, so `allow[compiler:error]end` does the
+same. Permissions are read before compilation starts, from a tolerant scan that
+reads past text it cannot lex — so a file whose opt-in is intact still gets its
+diagnostics even when the rest of it does not tokenise. Runtime faults are not
+covered by a `compiler:` grant; a program that divides by zero while running
+still says so.
+
 ## Diagnostics
 
 The descriptors earn their keep by being checked:
@@ -92,6 +117,10 @@ error: this name uses a class its descriptor does not permit
 
 A descriptor is an allowance rather than an inventory: it may permit classes
 the name never uses, and the order it permits them in means nothing.
+
+Diagnostics suggest rather than lecture where they can — a misspelled name is
+matched against what is in scope, and an unclosed block points at the line that
+opened it rather than at the end of the file.
 
 Recorded transcripts of every diagnostic live in [`tests/errors`](tests/errors);
 re-record them with `VERBAL_BLESS=1 cargo test`.

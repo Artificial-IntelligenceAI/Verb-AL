@@ -17,6 +17,8 @@ pub enum Tok {
     Equals,
     LParen,
     RParen,
+    LBracket,
+    RBracket,
     Eof,
 }
 
@@ -32,6 +34,8 @@ impl Tok {
             Tok::Equals => "`=`".into(),
             Tok::LParen => "`(`".into(),
             Tok::RParen => "`)`".into(),
+            Tok::LBracket => "`[`".into(),
+            Tok::RBracket => "`]`".into(),
             Tok::Eof => "the end of the program".into(),
         }
     }
@@ -63,6 +67,8 @@ pub fn lex(text: &str) -> Result<Vec<Token>, Diag> {
             '=' => Some(Tok::Equals),
             '(' => Some(Tok::LParen),
             ')' => Some(Tok::RParen),
+            '[' => Some(Tok::LBracket),
+            ']' => Some(Tok::RBracket),
             _ => None,
         };
         if let Some(tok) = single {
@@ -211,4 +217,41 @@ fn lex_quoted(
 
     Err(Diag::new("this quoted run is never closed", Span::new(start, text.len()))
         .note(format!("add a closing {}", quote)))
+}
+
+/// Lex as much as can be lexed, ignoring anything unrecognisable.
+///
+/// The permission scan runs before the compiler is allowed to say anything, so
+/// it cannot report a lexical error — it just reads past one. A file whose
+/// opt-in is intact still gets its diagnostics even when the text after it does
+/// not lex.
+pub fn lex_lossy(text: &str) -> Vec<Token> {
+    let mut from = 0usize;
+    let mut out = Vec::new();
+    loop {
+        match lex(&text[from..]) {
+            Ok(tokens) => {
+                out.extend(shifted(tokens, from));
+                return out;
+            }
+            Err(diag) => {
+                let Some(span) = diag.span else { return out };
+                let partial = lex(&text[from..span.start]).unwrap_or_default();
+                out.extend(shifted(partial, from));
+                // Step past the offending character and keep going.
+                let next = from + span.end.max(span.start + 1);
+                if next >= text.len() || !text.is_char_boundary(next) {
+                    return out;
+                }
+                from = next;
+            }
+        }
+    }
+}
+
+fn shifted(tokens: Vec<Token>, by: usize) -> impl Iterator<Item = Token> {
+    tokens.into_iter().filter(|t| t.tok != Tok::Eof).map(move |mut t| {
+        t.span = Span::new(t.span.start + by, t.span.end + by);
+        t
+    })
 }

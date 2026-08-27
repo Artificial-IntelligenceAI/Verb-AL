@@ -1,3 +1,5 @@
+allow[compiler:error.error-message]end
+
 action:note, remark:'One declaration of every type Verb-AL version one knows, each describing its own representation.'end
 
 privacy:local, memory:static, type:integer.1-sign-bit.31-value-bits.twos-complement, name.string.space.end: "signed thirty two" = '-2147483648'end

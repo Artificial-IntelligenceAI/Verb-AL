@@ -1,7 +1,7 @@
 error: no float layout has 9 exponent bits and 22 explicit mantissa bits
- --> tests/errors/no-such-layout.val:1:36
+ --> tests/errors/no-such-layout.val:3:36
   |
-1 | privacy:local, memory:static, type:float.1-sign-bit.9-exponent-bits.22-explicit-mantissa-bits, name.string.end: "odd" = '1'end
+3 | privacy:local, memory:static, type:float.1-sign-bit.9-exponent-bits.22-explicit-mantissa-bits, name.string.end: "odd" = '1'end
   |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   = the layouts are 5/10 (half), 8/7 (bfloat), 8/23 (single) and 11/52 (double)
   = the mantissa count excludes the implicit leading one

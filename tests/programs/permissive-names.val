@@ -1,3 +1,5 @@
+allow[compiler:error.error-message]end
+
 action:note, remark:'A name descriptor is an allowance, not an inventory: it may permit classes the name never uses, and the order it permits them in means nothing.'end
 
 action:note, remark:'Permits four classes, uses one.'end

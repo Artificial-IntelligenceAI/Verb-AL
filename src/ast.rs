@@ -32,6 +32,9 @@ pub struct Decl {
 #[derive(Clone, Debug)]
 pub enum Stmt {
     Decl(Decl),
+    /// `allow[compiler:error.error-message]end` — what the program permits the
+    /// compiler to do. Compile-time only; it runs no code.
+    Allow { permission: String, permission_span: Span, span: Span },
     Note { remark: String, span: Span },
     Say { source: Expr, span: Span },
     Assign { target: String, target_span: Span, value: Expr, span: Span },

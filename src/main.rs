@@ -40,8 +40,11 @@ fn main() -> ExitCode {
 
     let program = match verbal::front_end(&source) {
         Ok(p) => p,
-        Err(rendered) => {
-            eprint!("{}", rendered);
+        Err(rejection) => {
+            // A program that did not permit error messages does not get one.
+            if let Some(rendered) = rejection.rendered {
+                eprint!("{}", rendered);
+            }
             return ExitCode::from(1);
         }
     };

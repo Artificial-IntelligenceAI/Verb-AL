@@ -1,0 +1,6 @@
+error: `compiler:error.telepathy` is not something the compiler can be permitted
+ --> tests/errors/unknown-permission.val:2:7
+  |
+2 | allow[compiler:error.telepathy]end
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^
+  = the permissions are: compiler:error, compiler:error.error-message
