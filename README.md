@@ -1,4 +1,4 @@
-# Verb-AL
+# `Verb-AL` If Java & Zig had a baby. Perfect for corporate work (satire) 
 
 A statically typed, natively compiled language in which **nothing is implicit**.
 
